@@ -1,0 +1,21 @@
+{
+  "updatedAt": "2026-09-18T07:01:20.109Z",
+  "source": "enrich",
+  "count": 1,
+  "leads": [
+    {
+      "id": "osm-way-1360397192",
+      "name": "Thérapie Clinic",
+      "city": "",
+      "region": "",
+      "website": "https://therapieclinic.com/locations/westfield-stratford",
+      "social": "",
+      "websiteStatus": "has_site",
+      "email": "hello@therapieclinic.com",
+      "emails": [
+        "hello@therapieclinic.com"
+      ],
+      "emailSource": "https://therapieclinic.com/locations/westfield-stratford"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "slug": "kings-barbershop",
+  "preset": "barber",
+  "demo": true,
+  "brand": { "primary": "#141414", "accent": "#c9a227", "font": "bold" },
+  "business": {
+    "name": "Kings Barbershop",
+    "tagline": "Cuts, fades and shaves",
+    "phone": "+44 20 7946 0102",
+    "whatsapp": "+442079460102",
+    "email": "book@kingsbarbershop.example",
+    "founded": "2016",
+    "emergency": false,
+    "address": {
+      "street": "87 High Street",
+      "city": "London",
+      "region": "Greater London",
+      "postalCode": "E15 2QQ",
+      "country": "GB"
+    },
+    "geo": { "lat": 51.5406, "lng": -0.0042 },
+    "areas": [
+      "Stratford",
+      "Maryland",
+      "Forest Gate",
+      "Plaistow",
+      "Bow",
+      "Hackney Wick",
+      "Leyton",
+      "Upton Park"
+    ],
+    "hours": {
+      "mon": "Closed",
+      "tue": "09:00 to 19:00",
+      "wed": "09:00 to 19:00",
+      "thu": "09:00 to 20:30",
+      "fri": "09:00 to 20:30",
+      "sat": "08:00 to 19:00",
+      "sun": "10:00 to 16:00"
+    },
+    "formEndpoint": "",
+    "domain": ""
+  },
+  "stats": [
+    { "value": "8 yrs", "label": "On the High Street" },
+    { "value": "25 min", "label": "Average cut" },
+    { "value": "60k+", "label": "Cuts given" },
+    { "value": "6", "label": "Barbers on the team" }
+  ],
+  "trust": [
+    "Master barbers",
+    "Walk ins welcome",
+    "Sterilised tools",
+    "Student rates on Tuesdays"
+  ],
+  "testimonials": [
+    {
+      "name": "Aaron D.",
+      "location": "Stratford",
+      "text": "Been going for four years. They remember how I like the fade without me explaining it every time."
+    },
+    {
+      "name": "Nadia S.",
+      "location": "Forest Gate",
+      "text": "Took my six year old and they were brilliant with him. No fuss, no rush."
+    },
+    {
+      "name": "Chris B.",
+      "location": "Bow",
+      "text": "Walked in on a Saturday, waited ten minutes, best beard shape I have had."
+    }
+  ]
+}

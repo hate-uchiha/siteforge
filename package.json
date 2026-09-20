@@ -1,0 +1,20 @@
+{
+  "name": "siteforge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static site factory for local businesses that have no website. One command per client, zero dependencies.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:all": "node build.mjs --all",
+    "serve": "node server.mjs",
+    "list": "node build.mjs --list",
+    "harvest": "node tools/harvest.mjs",
+    "pool": "node tools/pool.mjs",
+    "enrich": "node tools/enrich.mjs",
+    "promote": "node tools/promote.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

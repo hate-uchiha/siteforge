@@ -1,0 +1,29 @@
+{
+  "https://therapieclinic.com/locations/westfield-stratford": {
+    "ok": true,
+    "url": "https://therapieclinic.com/locations/westfield-stratford",
+    "emails": [
+      {
+        "email": "hello@therapieclinic.com",
+        "mailto": false,
+        "points": 110,
+        "sameDomain": true,
+        "generic": true
+      }
+    ],
+    "phones": [
+      "+4402045385442"
+    ],
+    "at": "2026-09-18T07:00:00.653Z"
+  },
+  "http://toniandguy.com/salon/information/588": {
+    "ok": false,
+    "error": "fetch failed",
+    "at": "2026-09-18T07:01:19.728Z"
+  },
+  "https://laudiahair.co.uk/": {
+    "ok": false,
+    "error": "fetch failed",
+    "at": "2026-09-18T07:01:20.109Z"
+  }
+}

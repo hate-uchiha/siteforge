@@ -1,0 +1,74 @@
+{
+  "slug": "riverside-plumbing",
+  "preset": "plumber",
+  "demo": true,
+  "brand": { "primary": "#0b4f9e", "accent": "#ff7a18", "font": "bold" },
+  "business": {
+    "name": "Riverside Plumbing",
+    "tagline": "Plumbing and heating",
+    "phone": "+1 555 0142",
+    "whatsapp": "+15550142",
+    "email": "hello@riversideplumbing.example",
+    "founded": "2009",
+    "licence": "Licence #PL-4471, fully insured",
+    "emergency": true,
+    "address": {
+      "street": "128 Mill Road",
+      "city": "Springfield",
+      "region": "IL",
+      "postalCode": "62704",
+      "country": "US"
+    },
+    "geo": { "lat": 39.7817, "lng": -89.6501 },
+    "areas": [
+      "Springfield",
+      "Chatham",
+      "Rochester",
+      "Sherman",
+      "Riverton",
+      "Jerome",
+      "Grandview",
+      "Southern View"
+    ],
+    "hours": {
+      "mon": "07:00 to 19:00",
+      "tue": "07:00 to 19:00",
+      "wed": "07:00 to 19:00",
+      "thu": "07:00 to 19:00",
+      "fri": "07:00 to 19:00",
+      "sat": "08:00 to 16:00",
+      "sun": "Emergency only"
+    },
+    "formEndpoint": "",
+    "domain": ""
+  },
+  "stats": [
+    { "value": "18 yrs", "label": "On the tools" },
+    { "value": "3,400+", "label": "Jobs completed" },
+    { "value": "60 min", "label": "Average emergency response" },
+    { "value": "$0", "label": "Call out fee" }
+  ],
+  "trust": [
+    "Licensed and insured",
+    "Fixed price quotes",
+    "24/7 emergency call out",
+    "12 month workmanship guarantee"
+  ],
+  "testimonials": [
+    {
+      "name": "Daniel R.",
+      "location": "Springfield",
+      "text": "Burst pipe at 11pm and they were here inside the hour. Fixed the cause as well as the leak and charged what they quoted."
+    },
+    {
+      "name": "Priya M.",
+      "location": "Chatham",
+      "text": "Full bathroom refit. Tidy every day, walked me through the options, and no surprise costs at the end."
+    },
+    {
+      "name": "Tom H.",
+      "location": "Rochester",
+      "text": "Third time we have used them. Same engineer, straight answers, and the boiler has not skipped since."
+    }
+  ]
+}

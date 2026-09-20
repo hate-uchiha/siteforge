@@ -1,0 +1,29 @@
+{
+  "slug": "peaky-barbers",
+  "preset": "salon",
+  "demo": true,
+  "business": {
+    "name": "Peaky Barbers",
+    "phone": "",
+    "email": "",
+    "address": {
+      "street": "70-73 The Mall",
+      "city": "London",
+      "region": "",
+      "postalCode": "",
+      "country": ""
+    },
+    "geo": {
+      "lat": 51.5419343,
+      "lng": 0.0011858
+    },
+    "areas": [
+      "London"
+    ],
+    "formEndpoint": "",
+    "domain": ""
+  },
+  "testimonials": [],
+  "_source": "https://www.openstreetmap.org/way/1302435245",
+  "_score": 55
+}

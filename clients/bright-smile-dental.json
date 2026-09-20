@@ -1,0 +1,71 @@
+{
+  "slug": "bright-smile-dental",
+  "preset": "dentist",
+  "demo": true,
+  "brand": { "primary": "#0f766e", "accent": "#38bdf8", "font": "clean" },
+  "business": {
+    "name": "Bright Smile Dental",
+    "tagline": "Family and cosmetic dentistry",
+    "phone": "+1 555 0177",
+    "email": "reception@brightsmiledental.example",
+    "founded": "2011",
+    "licence": "GDC registered practice",
+    "emergency": true,
+    "address": {
+      "street": "4 Bridge Street",
+      "city": "Springfield",
+      "region": "IL",
+      "postalCode": "62701",
+      "country": "US"
+    },
+    "geo": { "lat": 39.7986, "lng": -89.6440 },
+    "areas": [
+      "Springfield",
+      "Chatham",
+      "Sherman",
+      "Riverton",
+      "Jerome",
+      "Grandview"
+    ],
+    "hours": {
+      "mon": "08:30 to 18:00",
+      "tue": "08:30 to 18:00",
+      "wed": "08:30 to 20:00",
+      "thu": "08:30 to 18:00",
+      "fri": "08:30 to 16:00",
+      "sat": "09:00 to 13:00",
+      "sun": "Closed"
+    },
+    "formEndpoint": "",
+    "domain": ""
+  },
+  "stats": [
+    { "value": "2,000+", "label": "Patients on the books" },
+    { "value": "14 yrs", "label": "In practice" },
+    { "value": "Same day", "label": "Emergency slots" },
+    { "value": "0%", "label": "Finance plans available" }
+  ],
+  "trust": [
+    "Nervous patient friendly",
+    "Transparent pricing",
+    "Same day emergencies",
+    "Flexible payment plans"
+  ],
+  "testimonials": [
+    {
+      "name": "Sarah L.",
+      "location": "Springfield",
+      "text": "I had not been to a dentist in nine years because of anxiety. They talked me through every step and I have been back three times since."
+    },
+    {
+      "name": "Mark T.",
+      "location": "Sherman",
+      "text": "Got a same day appointment for a broken tooth on a Friday. Sorted in one visit and the price was exactly what they quoted."
+    },
+    {
+      "name": "Amina K.",
+      "location": "Riverton",
+      "text": "My kids actually ask when the next visit is. That says everything."
+    }
+  ]
+}
