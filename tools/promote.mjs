@@ -138,6 +138,19 @@ const CATEGORY_TO_PRESET = {
   lawyer: 'lawyer',
 };
 
+// OpenStreetMap tags every barbershop, salon and beauty shop as shop=hairdresser, and
+// salon is matched first, so barbers would always land on the salon preset. The name is
+// the only signal that separates them.
+const NAME_HINTS = [[/\bbarbers?\b|\bbarbershop\b|\bbarber'?s\b/i, 'barber']];
+
+function refinePreset(preset, name) {
+  if (preset !== 'salon') return preset;
+  for (const [pattern, hinted] of NAME_HINTS) {
+    if (pattern.test(name || '')) return hinted;
+  }
+  return preset;
+}
+
 function slugify(value) {
   return String(value)
     .normalize('NFD')
@@ -238,7 +251,7 @@ function main() {
     process.exit(1);
   }
 
-  const preset = CATEGORY_TO_PRESET[match.category];
+  const preset = refinePreset(CATEGORY_TO_PRESET[match.category], match.name);
   if (!preset) {
     console.error(`Lead "${match.name}" has no mapped trade (category: ${match.category || 'none'}).`);
     console.error(`Set one of: ${Object.keys(CATEGORY_TO_PRESET).join(', ')}`);
