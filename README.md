@@ -139,6 +139,11 @@ the fold.
 - **No invented review data.** `aggregateRating` schema is only emitted on a live build, because
   Google treats fabricated review markup as spam.
 - Mobile first, keyboard accessible, respects `prefers-reduced-motion`, one `h1` per page.
+- **A 3D depth layer.** Cards and gallery items occupy real 3D space: the quote card sits angled
+  and squares up when reached for by pointer or keyboard focus, service cards tilt toward the
+  pointer, icons float above their card surface, and sections swing in on scroll. Pointer
+  tracking is gated behind `@media (hover: hover) and (pointer: fine)` and skipped entirely
+  under `prefers-reduced-motion`, so touch devices attach no listeners and pay nothing.
 - System font fallback, so the page still looks right if Google Fonts is blocked.
 
 ## Deploy (free)

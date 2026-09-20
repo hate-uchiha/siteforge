@@ -114,4 +114,45 @@
         });
     });
   });
+
+  // Interactive 3D tilt. Only where a precise pointer exists and motion is
+  // welcome, so touch devices and reduced-motion users keep the static page
+  // and never attach a pointer listener.
+  var motionOK =
+    window.matchMedia &&
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (motionOK) {
+    var MAX_TILT = 6;
+
+    document.querySelectorAll('.card').forEach(function (el) {
+      var frame = 0;
+
+      el.addEventListener('pointermove', function (event) {
+        if (frame) return;
+        frame = window.requestAnimationFrame(function () {
+          frame = 0;
+          var rect = el.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          var x = (event.clientX - rect.left) / rect.width - 0.5;
+          var y = (event.clientY - rect.top) / rect.height - 0.5;
+          el.style.setProperty('--ry', (x * MAX_TILT * 2).toFixed(2) + 'deg');
+          el.style.setProperty('--rx', (-y * MAX_TILT * 2).toFixed(2) + 'deg');
+        });
+      });
+
+      var reset = function () {
+        if (frame) {
+          window.cancelAnimationFrame(frame);
+          frame = 0;
+        }
+        el.style.removeProperty('--rx');
+        el.style.removeProperty('--ry');
+      };
+
+      el.addEventListener('pointerleave', reset);
+      el.addEventListener('pointercancel', reset);
+    });
+  }
 })();

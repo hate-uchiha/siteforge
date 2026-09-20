@@ -492,7 +492,6 @@ p {
 }
 
 .card:hover {
-  transform: translateY(-4px);
   box-shadow: 0 28px 50px -34px rgba(10, 18, 30, 0.5);
   border-color: color-mix(in srgb, var(--brand) 35%, var(--line));
 }
@@ -1016,13 +1015,14 @@ form.quote-form {
 /* ---------- reveal ---------- */
 .reveal {
   opacity: 0;
-  transform: translateY(18px);
+  transform: perspective(1000px) translateY(24px) rotateX(-7deg);
+  transform-origin: 50% 100%;
 }
 
 .reveal.is-in {
   opacity: 1;
-  transform: none;
-  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 0.68, 0.35, 1);
+  transform: perspective(1000px) translateY(0) rotateX(0deg);
+  transition: opacity 0.55s ease, transform 0.6s cubic-bezier(0.22, 0.68, 0.35, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1035,5 +1035,103 @@ form.quote-form {
   .reveal {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* ---------- depth layer ----------
+   Three-dimensional layout, added as a self-contained layer so the flat design
+   survives if this block is ever removed. Static depth costs nothing and works
+   everywhere; pointer-tracked tilt is opt-in and runs only where there is a
+   precise pointer, so phones on slow data do no extra work. */
+
+/* Children of these containers are allowed to occupy 3D space. */
+.hero-grid,
+.grid,
+.gallery {
+  transform-style: preserve-3d;
+}
+
+/* Cards cascade in rather than all arriving at once. */
+.grid > .reveal:nth-child(2) {
+  transition-delay: 70ms;
+}
+
+.grid > .reveal:nth-child(3) {
+  transition-delay: 140ms;
+}
+
+.grid > .reveal:nth-child(4) {
+  transition-delay: 210ms;
+}
+
+.grid > .reveal:nth-child(5) {
+  transition-delay: 280ms;
+}
+
+.grid > .reveal:nth-child(6) {
+  transition-delay: 350ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero-grid {
+    perspective: 1500px;
+    perspective-origin: 62% 40%;
+  }
+
+  /* The quote card sits angled away from the reader and squares up when the
+     reader reaches for it, by pointer or by keyboard focus. */
+  .hero-card {
+    transform: rotateY(-9deg) rotateX(2.5deg);
+    transform-origin: 100% 50%;
+    transition: transform 0.55s cubic-bezier(0.22, 0.68, 0.35, 1);
+  }
+
+  .hero-card:hover,
+  .hero-card:focus-within {
+    transform: rotateY(-1.5deg) rotateX(0deg) translateZ(26px);
+  }
+
+  /* Tilt angles come from the pointer, written to --rx and --ry by app.js. */
+  .card {
+    transform: translateY(var(--lift, 0px)) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
+      translateZ(var(--z, 0px));
+    transition: transform 0.2s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+  }
+
+  .card:hover {
+    --lift: -6px;
+    --z: 16px;
+  }
+
+  /* The icon lifts off the card surface. Body text is deliberately left flat:
+     pushing glyphs along Z blurs them on some renderers. */
+  .card-icon {
+    transform: translateZ(26px);
+  }
+
+  .gallery {
+    perspective: 1200px;
+  }
+
+  .gallery > * {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .gallery > *:hover {
+    transform: translateZ(34px) scale(1.03);
+    box-shadow: 0 30px 60px -30px rgba(10, 18, 30, 0.55);
+  }
+}
+
+/* Anyone who asked their system to reduce motion gets the flat page. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-card,
+  .card,
+  .card-icon,
+  .gallery > *,
+  .reveal,
+  .reveal.is-in {
+    transform: none !important;
+    transition-delay: 0ms !important;
   }
 }
