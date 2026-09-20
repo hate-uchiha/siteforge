@@ -21,15 +21,28 @@ The factory is in working condition. Nothing is half-finished or broken.
 
 ## Repository
 
-- Git was initialised 2026-09-20. First commit `ba3bd9a`, 69 files.
-- **There is no remote.** This history exists only on this machine. Losing the disk loses it.
-- Committed with a local identity (`Markson <markson@hate-uchiha.local>`) because no git
-  identity was configured. To correct it:
+- Git was initialised 2026-09-20. First commit `ba3bd9a`, second `00a8fc5`, on branch `main`.
+- **Remote:** `git@github.com:hate-uchiha/siteforge.git`, private, pushed and in sync.
+  Recoverable from anywhere with `git clone git@github.com:hate-uchiha/siteforge.git`.
+- Backups also exist as `git bundle` files at `~/siteforge-<date>.bundle` and
+  `/mnt/d/SiteForge-backup/`. Use `git bundle create <file> --all` after big changes.
+- The first two commits are authored as `Markson <markson@hate-uchiha.local>` because no git
+  identity was configured when they were made. The repo config now points at the real email.
+  To rewrite the author on the existing commits (safe here, nothing has been shared):
 
   ```bash
   git config user.name "Your Name"
   git config user.email "you@example.com"
-  git commit --amend --reset-author
+  git rebase --root --exec 'git commit --amend --no-edit --reset-author'
+  git push --force-with-lease
+  ```
+
+- **The repository contains third-party data**: 32 real business names with addresses and
+  coordinates, plus one real email and one real phone number. It is private, so this is not
+  published. If it is ever made public, strip the lead data first:
+
+  ```bash
+  git rm -r --cached leads pool && echo 'leads/\npool/' >> .gitignore
   ```
 
 ## Lead pool
@@ -98,11 +111,11 @@ new machine, that file is the other half and needs to travel with it.
 
 ## Next actions, in order
 
-1. **Add a git remote and push.** The whole project exists on one disk. This is the highest
-   value action available and it costs nothing.
-2. **Decide the trade and the area**, using `docs/HARVEST-FINDINGS.md`. Shops mean walk-ins,
+1. **Decide the trade and the area**, using `docs/HARVEST-FINDINGS.md`. Shops mean walk-ins,
    not phone calls. Mobile trades are not in OpenStreetMap and must be found by hand.
-3. **Build 3 to 5 demos on one street, then walk it.** Do not build 32.
+2. **Build 3 to 5 demos on one street, then walk it.** Do not build 32.
+3. **Add a CI check.** GitHub Actions can run `node test.mjs` on every push for free, so the
+   factory verifies itself without you remembering to.
 4. **Correct the git identity** if the commit author matters.
 
 ## Do not
