@@ -1,0 +1,29 @@
+{
+  "slug": "ms-barber-shop",
+  "preset": "barber",
+  "demo": true,
+  "business": {
+    "name": "MS Barber Shop",
+    "phone": "",
+    "email": "",
+    "address": {
+      "street": "70-73 The Mall",
+      "city": "London",
+      "region": "",
+      "postalCode": "",
+      "country": ""
+    },
+    "geo": {
+      "lat": 51.5419715,
+      "lng": 0.000647
+    },
+    "areas": [
+      "London"
+    ],
+    "formEndpoint": "",
+    "domain": ""
+  },
+  "testimonials": [],
+  "_source": "https://www.openstreetmap.org/way/1302435265",
+  "_score": 55
+}

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-18T07:05:45.129Z",
+  "updatedAt": "2026-09-20T19:23:38.505Z",
   "leads": [
     {
       "id": "osm-way-1302700240",
@@ -149,10 +149,10 @@
       "chain": false,
       "source": "openstreetmap",
       "sourceUrl": "https://www.openstreetmap.org/way/1302435265",
-      "status": "new",
+      "status": "demo",
       "notes": "",
       "contactedAt": "",
-      "demoBuilt": false,
+      "demoBuilt": true,
       "score": 55,
       "tier": "B",
       "why": "no site +25 | full address +10 | independent +8 | category +5 | real name +5 | geo +2"
