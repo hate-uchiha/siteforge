@@ -236,3 +236,10 @@ own trade's services, the postcode fix, the live-mode figure guard, and the CI c
 - Do not build all 32 leads. Five on one street is the unit of work.
 - Do not run `harvest` in a loop. The Overpass endpoint starts returning 504s. Use the pacing
   built into `tools/harvest.mjs`.
+
+## Resuming
+
+Saying **`siteforge`** in a new chat loads the `siteforge` skill and runs its resume
+protocol: prove the factory works (`npm run list`, `npm run build`, `node test.mjs`), check
+for unpushed commits, start the preview server, then report state and the single next action.
+The details that protocol needs are all in this file, so keep this file current.
