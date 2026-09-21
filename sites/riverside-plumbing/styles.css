@@ -1056,16 +1056,53 @@ form.quote-form {
 }
 
 /* ---------- depth layer ----------
-   Three-dimensional layout, added as a self-contained layer so the flat design
-   survives if this block is ever removed. Static depth costs nothing and works
-   everywhere; pointer-tracked tilt is opt-in and runs only where there is a
-   precise pointer, so phones on slow data do no extra work. */
+   Three-dimensional layout on every device, phone included. Static depth is CSS
+   only, so a phone pays nothing: no listeners, no per frame work, one
+   composited layer per transformed element. Pointer tracking is an enhancement
+   layered on top, only where a precise pointer exists. Body text is left flat,
+   because pushing glyphs along Z blurs them on some renderers. */
 
-/* Children of these containers are allowed to occupy 3D space. */
+/* A container needs its own perspective or a child's translateZ has no visible
+   effect at all: without it the projection is orthographic. */
+.hero-grid,
+.grid {
+  perspective: 1000px;
+}
+
+/* Children occupy real 3D space instead of being flattened into the parent.
+   `.card` matters in particular: without this the icon lift below is discarded. */
 .hero-grid,
 .grid,
-.gallery {
+.card {
   transform-style: preserve-3d;
+}
+
+/* A rotated element's projected box can reach past its container and create
+   sideways scroll on a narrow screen, so clip it. This is on `main` on purpose:
+   the sticky header is outside main, and `clip` unlike `hidden` does not turn an
+   element into a scroll container. */
+main {
+  overflow-x: clip;
+}
+
+/* The icon now stands off the card surface, on a phone too, because the parent
+   card preserves 3D rather than flattening it. */
+.card-icon {
+  transform: translateZ(26px);
+}
+
+/* The quote card is angled at rest on touch as well, so the demo still has
+   depth on the phone it is most likely to be shown from, and it squares up the
+   moment a reader taps into the form, which is when legibility starts to
+   matter. `.hero` clips its own overflow so the projection cannot escape. */
+.hero-card {
+  transform: rotateY(-6deg) rotateX(2deg);
+  transform-origin: 100% 50%;
+  transition: transform 0.55s cubic-bezier(0.22, 0.68, 0.35, 1);
+}
+
+.hero-card:focus-within {
+  transform: rotateY(-1deg) rotateX(0deg);
 }
 
 /* Cards cascade in rather than all arriving at once. */
@@ -1095,12 +1132,10 @@ form.quote-form {
     perspective-origin: 62% 40%;
   }
 
-  /* The quote card sits angled away from the reader and squares up when the
-     reader reaches for it, by pointer or by keyboard focus. */
+  /* Deeper angle than the touch fallback, and it squares up when reached for
+     by pointer or by keyboard focus. */
   .hero-card {
     transform: rotateY(-9deg) rotateX(2.5deg);
-    transform-origin: 100% 50%;
-    transition: transform 0.55s cubic-bezier(0.22, 0.68, 0.35, 1);
   }
 
   .hero-card:hover,
@@ -1120,21 +1155,15 @@ form.quote-form {
     --z: 16px;
   }
 
-  /* The icon lifts off the card surface. Body text is deliberately left flat:
-     pushing glyphs along Z blurs them on some renderers. */
-  .card-icon {
-    transform: translateZ(26px);
-  }
-
   .gallery {
-    perspective: 1200px;
+    perspective: 1100px;
   }
 
-  .gallery > * {
+  .shot {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
-  .gallery > *:hover {
+  .shot:hover {
     transform: translateZ(34px) scale(1.03);
     box-shadow: 0 30px 60px -30px rgba(10, 18, 30, 0.55);
   }
@@ -1145,7 +1174,7 @@ form.quote-form {
   .hero-card,
   .card,
   .card-icon,
-  .gallery > *,
+  .shot,
   .reveal,
   .reveal.is-in {
     transform: none !important;
