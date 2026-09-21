@@ -161,14 +161,48 @@ function slugify(value) {
     .slice(0, 48);
 }
 
+// OpenStreetMap hands back the whole address as one string, postcode included:
+// "70-73 The Mall, London, E15 1XQ". The build prints street, city, region,
+// postalCode and country as one line, so the pieces have to be split here or the
+// demo shows an address with the postcode missing. A demo with the wrong address
+// is worse than no demo, because the owner spots it in the first second.
+const UK_POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s?(\d[A-Z]{2})\b/i;
+
+// A trailing country code ("GB") is noise on a local business page, so it is
+// dropped rather than printed after the postcode.
+const BARE_COUNTRY_CODES = new Set(['GB', 'UK', 'IE', 'US']);
+
+function parseAddress(lead) {
+  const city = lead.city || '';
+  const parts = String(lead.address || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  let postalCode = lead.postalCode || '';
+  const streetParts = [];
+
+  for (const part of parts) {
+    const match = part.match(UK_POSTCODE);
+    if (match && !postalCode) {
+      postalCode = `${match[1].toUpperCase()} ${match[2].toUpperCase()}`;
+      const rest = part.replace(UK_POSTCODE, '').trim();
+      if (rest) streetParts.push(rest);
+      continue;
+    }
+    if (part.length === 2 && BARE_COUNTRY_CODES.has(part.toUpperCase())) continue;
+    streetParts.push(part);
+  }
+
+  // When the only street OpenStreetMap had was the city name, printing both
+  // reads as a mistake, so the duplicate is dropped.
+  const street = streetParts[0] && streetParts[0].toLowerCase() !== city.toLowerCase() ? streetParts[0] : '';
+
+  return { street, city, region: lead.region || '', postalCode, country: lead.country || '' };
+}
+
 function clientConfig(lead, preset, hours, areas) {
-  const address = {
-    street: lead.address ? String(lead.address).split(',')[0].trim() : '',
-    city: lead.city || '',
-    region: lead.region || '',
-    postalCode: '',
-    country: lead.country || '',
-  };
+  const address = parseAddress(lead);
 
   return {
     slug: slugify(lead.name),
@@ -289,4 +323,11 @@ function main() {
   console.log(`\nNext:\n  node build.mjs ${slug}\n  npm run serve`);
 }
 
-main();
+const invokedDirectly =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (invokedDirectly) main();
+
+// Exported so the test suite can check the address splitting without writing a
+// client file for every case it wants to cover.
+export { parseAddress, refinePreset, slugify };

@@ -118,5 +118,26 @@ const demoOut = render(mergeConfig({ slug: 'demo-check', preset: 'electrician', 
 check('no aggregateRating in demo mode', !demoOut.html.includes('aggregateRating'));
 check('demo keeps the sample figures', demoOut.html.includes('class="stats reveal"') && demoOut.html.includes('2,100+'));
 
+console.log('\nLead import (addresses OpenStreetMap returns as one string)');
+const { parseAddress } = await import('./tools/promote.mjs');
+
+const mall = parseAddress({ address: '70-73 The Mall, London, E15 1XQ', city: 'London' });
+check(
+  'postcode is split out of the address',
+  mall.street === '70-73 The Mall' && mall.postalCode === 'E15 1XQ',
+  JSON.stringify(mall)
+);
+
+const broadway = parseAddress({ address: '40 Broadway, London, E15 4QS, GB', city: 'London' });
+check(
+  'country code is dropped, not printed',
+  broadway.postalCode === 'E15 4QS' && !broadway.country && !broadway.street.includes('GB'),
+  JSON.stringify(broadway)
+);
+
+const cityOnly = parseAddress({ address: 'London', city: 'London' });
+check('a city-only address is not printed twice', cityOnly.street === '', JSON.stringify(cityOnly));
+check('an empty lead does not throw', parseAddress({}).street === '');
+
 console.log(`\n${failures ? `${failures} failure(s)` : 'all checks passed'}\n`);
 if (failures) process.exit(1);
