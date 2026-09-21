@@ -1,0 +1,11 @@
+{
+  "key": "zee-barbers",
+  "mode": "client",
+  "generated_by": "tools/make-preset-art.py",
+  "og": {
+    "file": "og.jpg",
+    "width": 1200,
+    "height": 630,
+    "bytes": 47110
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "key": "barber",
+  "mode": "preset",
+  "generated_by": "tools/make-preset-art.py",
+  "hero": {
+    "file": "hero.webp",
+    "width": 1200,
+    "height": 800,
+    "bytes": 10156
+  },
+  "craft": [
+    {
+      "file": "craft-1.webp",
+      "width": 800,
+      "height": 600,
+      "bytes": 9954
+    },
+    {
+      "file": "craft-2.webp",
+      "width": 800,
+      "height": 600,
+      "bytes": 8998
+    },
+    {
+      "file": "craft-3.webp",
+      "width": 800,
+      "height": 600,
+      "bytes": 3706
+    }
+  ]
+}

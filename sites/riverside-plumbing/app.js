@@ -115,6 +115,40 @@
     });
   });
 
+  // Depth planes. Elements carrying data-depth drift against the scroll while
+  // they cross the viewport, which is what reads as a scene rather than a sheet
+  // of paper. transform only, one rAF per frame for the whole page, and nothing
+  // is measured until the first scroll, so the phone pays for it once a reader
+  // actually moves. Skipped entirely when motion is unwelcome.
+  var depthItems = Array.prototype.slice.call(document.querySelectorAll('[data-depth]'));
+
+  if (motionOK && depthItems.length) {
+    var depthFrame = 0;
+
+    var moveDepth = function () {
+      depthFrame = 0;
+      var vh = window.innerHeight || 0;
+
+      depthItems.forEach(function (el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.bottom < -vh || rect.top > vh * 2) return;
+        var rate = parseFloat(el.getAttribute('data-depth')) || 0;
+        // 0 at mid-screen, so the element is never offset where the eye lands.
+        var progress = (rect.top + rect.height / 2 - vh / 2) / vh;
+        el.style.setProperty('--drift', (-progress * rate * vh).toFixed(1) + 'px');
+      });
+    };
+
+    var queueDepth = function () {
+      if (depthFrame) return;
+      depthFrame = window.requestAnimationFrame(moveDepth);
+    };
+
+    window.addEventListener('scroll', queueDepth, { passive: true });
+    window.addEventListener('resize', queueDepth, { passive: true });
+    queueDepth();
+  }
+
   // Interactive 3D tilt. Only where a precise pointer exists and motion is
   // welcome, so touch devices and reduced-motion users keep the static page
   // and never attach a pointer listener.

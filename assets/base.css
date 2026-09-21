@@ -598,6 +598,71 @@ p {
   object-fit: cover;
 }
 
+/* A tile carrying real artwork needs the caption to stay legible over it. */
+.shot-art span {
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.75);
+}
+
+.shot-sample {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 2;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* ---------- hero band ---------- */
+/* The first screen argues the case; this band shows the trade. It sits between the
+   hero and the trust strip so neither of them loses its rhythm. */
+.band-art {
+  padding: clamp(1.5rem, 3.5vw, 2.75rem) 0 0;
+}
+
+.band-art .art {
+  position: relative;
+  margin: 0;
+  border-radius: calc(var(--radius) * 1.8);
+  overflow: hidden;
+  box-shadow: 0 24px 60px -34px color-mix(in srgb, var(--ink) 60%, transparent);
+}
+
+.band-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+
+.sample-tag {
+  position: absolute;
+  left: 0.9rem;
+  bottom: 0.9rem;
+  margin: 0;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  /* A wide band on a phone is mostly empty space: keep the panel, lose the height. */
+  .band-art img {
+    aspect-ratio: 4 / 3;
+  }
+}
+
 /* ---------- testimonials ---------- */
 .quote {
   background: #fff;
@@ -1162,5 +1227,300 @@ main {
   .reveal.is-in {
     transform: none !important;
     transition-delay: 0ms !important;
+  }
+}
+
+/* ---------- depth: the art planes ----------
+   The band used to be one flat picture, which is exactly what a gradient panel
+   reads as. It is now three planes at different Z: a blurred blow-up of the same
+   file sitting behind, the panel itself, and anything pinned to it. The backdrop
+   reuses the same URL, so it costs one cached request and no extra bytes. */
+
+.band-art .art,
+.page-head-art {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.band-art .plane,
+.page-head .plane {
+  position: absolute;
+  inset: -4%;
+  border-radius: inherit;
+  background-size: cover;
+  background-position: center;
+  filter: blur(38px) saturate(1.25);
+  opacity: 0.5;
+  transform: translateZ(-70px) scale(1.02) translateY(var(--drift, 0px));
+  pointer-events: none;
+  z-index: 0;
+}
+
+.band-art .art > img,
+.page-head-art > img {
+  position: relative;
+  z-index: 1;
+}
+
+/* Pinned to the panel, so it floats over the artwork rather than sitting in it,
+   and it drifts slightly against the panel behind it. */
+.sample-tag {
+  transform: translateZ(38px) translateY(var(--drift, 0px));
+}
+
+/* The container needs perspective or the panel's angle silently flattens back
+   into an orthographic projection, which is how depth quietly disappears. */
+.band-art .wrap {
+  perspective: 1400px;
+  perspective-origin: 50% 30%;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .band-art .art {
+    transform: rotateX(1.2deg);
+    transition: transform 0.5s cubic-bezier(0.22, 0.68, 0.35, 1);
+  }
+
+  .band-art .art:hover {
+    transform: rotateX(0deg) translateZ(18px);
+  }
+}
+
+/* ---------- depth: the page head ----------
+   Subpages open on a quieter note than the home hero, but the panel still has to
+   sit off the page rather than in it. */
+
+.page-head {
+  position: relative;
+  padding: clamp(2.25rem, 5vw, 4rem) 0 clamp(1.5rem, 3vw, 2.5rem);
+  background:
+    radial-gradient(900px 420px at 88% -20%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%),
+    var(--bg);
+}
+
+.page-head-inner {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+  perspective: 1300px;
+}
+
+@media (min-width: 900px) {
+  .page-head-inner {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
+.page-head-inner h1 {
+  margin: 0.35rem 0 0.7rem;
+  font-size: clamp(1.9rem, 3.6vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.page-head .lede {
+  margin: 0 0 1.4rem;
+  max-width: 34rem;
+  color: var(--muted);
+  font-size: 1.04rem;
+}
+
+.page-head-art {
+  margin: 0;
+  border-radius: calc(var(--radius) * 1.8);
+  overflow: hidden;
+  transform: rotateY(-5deg) rotateX(1.5deg);
+  transform-origin: 0% 50%;
+  box-shadow: 0 34px 70px -40px color-mix(in srgb, var(--ink) 65%, transparent);
+}
+
+.page-head-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 11;
+  object-fit: cover;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .page-head-art {
+    transform: rotateY(-8deg) rotateX(2deg);
+    transition: transform 0.5s cubic-bezier(0.22, 0.68, 0.35, 1);
+  }
+
+  .page-head-art:hover {
+    transform: rotateY(-1deg) rotateX(0deg) translateZ(22px);
+  }
+}
+
+/* ---------- depth: how it goes ---------- */
+
+.section-steps {
+  background: var(--surface);
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+  perspective: 1200px;
+}
+
+@media (min-width: 760px) {
+  .steps {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Staggered heights beat a row of identical boxes for reading order, and they
+     give the eye a reason to travel in one direction. */
+  .steps > .step:nth-child(even) {
+    transform: translateY(1.35rem);
+  }
+}
+
+.step {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.3rem 1.5rem;
+  transform-style: preserve-3d;
+  box-shadow: 0 18px 40px -34px rgba(10, 18, 30, 0.55);
+}
+
+.step-num {
+  display: inline-block;
+  font-family: var(--font-head);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--accent-ink);
+  transform: translateZ(22px);
+}
+
+.step h3 {
+  margin: 0.5rem 0 0.4rem;
+  font-size: 1.04rem;
+}
+
+.step p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.93rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .step {
+    transition: transform 0.3s cubic-bezier(0.22, 0.68, 0.35, 1), box-shadow 0.3s ease;
+  }
+
+  .step:hover {
+    transform: translateZ(30px);
+    box-shadow: 0 34px 60px -38px rgba(10, 18, 30, 0.6);
+  }
+}
+
+/* ---------- depth: gallery tiles stand up ---------- */
+
+.gallery {
+  perspective: 1200px;
+}
+
+.shot {
+  transform-style: preserve-3d;
+}
+
+.shot span {
+  transform: translateZ(26px);
+}
+
+.shot-sample {
+  transform: translateZ(34px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .band-art .art,
+  .page-head-art,
+  .step,
+  .steps > .step:nth-child(even) {
+    transform: none !important;
+  }
+
+  .band-art .plane {
+    transform: translateZ(-40px) scale(1.02);
+  }
+}
+
+/* ---------- depth: the fact card ----------
+   Subpages open with facts rather than a second copy of the band, so the panel
+   carries something a visitor can use: what is promised, and the number to ring.
+   Layered shadows do the work here. One soft shadow reads as a sticker; three at
+   different spreads read as an object held above the page. */
+
+.page-head-card {
+  position: relative;
+  margin: 0;
+  padding: clamp(1.3rem, 3vw, 1.8rem);
+  border-radius: calc(var(--radius) * 1.7);
+  background: #fff;
+  border: 1px solid var(--line);
+  transform-style: preserve-3d;
+  transform: rotateY(-5deg) rotateX(1.5deg) translateY(var(--drift, 0px));
+  transform-origin: 0% 50%;
+  box-shadow:
+    0 2px 4px -2px rgba(10, 18, 30, 0.18),
+    0 14px 30px -18px rgba(10, 18, 30, 0.35),
+    0 44px 80px -50px rgba(10, 18, 30, 0.6);
+}
+
+.page-head-card h2 {
+  margin: 0 0 0.9rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.page-head-card ul {
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.page-head-card li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  font-size: 0.95rem;
+}
+
+.page-head-card .card-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: var(--brand);
+  text-decoration: none;
+  transform: translateZ(20px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .page-head-card {
+    transform: rotateY(-8deg) rotateX(2deg) translateY(var(--drift, 0px));
+    transition: transform 0.5s cubic-bezier(0.22, 0.68, 0.35, 1);
+  }
+
+  .page-head-card:hover {
+    transform: rotateY(-1deg) rotateX(0deg) translateZ(22px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-head-card {
+    transform: none !important;
   }
 }

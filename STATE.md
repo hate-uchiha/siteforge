@@ -14,11 +14,88 @@ Verified 2026-09-21:
 
 - `npm run list` works: **20 niches**, 8 configured clients.
 - `npm run build` works: **8/8 sites built**.
-- `node test.mjs` passes: **all checks passed**. The suite now also covers live-mode figures
-  and the address splitting used by the importer.
+- `node test.mjs` passes: **all checks passed**. The suite now also covers live-mode figures,
+  the address splitting used by the importer, and the imagery rules (sample art stays in
+  demos, dimensions on every img, no still used twice, a missing path renders nothing).
 - Node v22.23.2.
 
 The factory is in working condition. Nothing is half-finished or broken.
+
+## Pages
+
+Changed 2026-09-21. The site used to be one long page with in-page anchors. It is now seven
+pages per client, built from one registry in `build.mjs` (`PAGES`):
+
+| Page | Folder | What it is for |
+|---|---|---|
+| Home | `/` | the pitch in one screen, then the short version of everything |
+| Services | `/services/` | every job, the process, and the price framing |
+| Our work | `/work/` | the gallery, at full size |
+| About | `/about/` | how we work, guarantees, areas covered |
+| Reviews | `/reviews/` | all the quotes, and the honesty note about them |
+| FAQs | `/faq/` | the questions, with FAQPage markup |
+| Contact | `/contact/` | phone, hours, map, quote form |
+
+- **The nav is generated from the same registry as the pages**, so a page cannot be linked
+  without being built. Subpages sit exactly one level deep, which keeps the relative link
+  prefix a single testable value (`../`) instead of a path resolver.
+- Every page has its own title, description, canonical, `WebPage` + `BreadcrumbList` markup
+  and its own layout treatment (the `page-<id>` class). The home page keeps the
+  `LocalBusiness` profile; the FAQ page carries the `FAQPage`.
+- JSON-LD stops being one blob on one page: the business belongs on home, and each subpage
+  describes itself.
+- `test.mjs` walks every page: one `h1` each, canonical, JSON-LD parses, correct relative
+  asset paths, exactly one `aria-current`, **and a link check** that resolves every internal
+  `href`/`src` to a real file. Multi-page sites fail by linking to a page nobody built or to
+  an anchor that lives on a different page, and both are silent in a browser.
+
+## Depth
+
+Changed 2026-09-21. The depth layer already existed (angled hero card, lifted icons,
+staggered reveal) but it was invisible in practice: it was confined to small card hovers, and
+the one big surface — the hero band — was a flat gradient panel plus 2px outlines.
+
+- The band is now **three planes**: a blurred blow-up of the same file behind, the panel
+  itself, and the caption pinned forward. The backdrop reuses the same URL, so it costs one
+  cached request and no extra bytes.
+- **Scroll parallax** on `[data-depth]`, added in `app.js`: one rAF per frame for the whole
+  page, skipped entirely unless a fine pointer and welcome motion are both present.
+- Subpage heads carry a **fact card** (what is promised, plus the phone number) rather than
+  repeating the band art six times, layered with three shadows at different spreads.
+- The gallery tiles keep their caption and sample tag on a forward plane.
+- **The artwork itself is now dimensional.** `tools/make-preset-art.py` draws solids with a
+  light source: extruded walls shaded Lambert-style, discs with punched finger loops, cast
+  shadows, specular edges, and three staged copies of each object (blurred far, subject,
+  crisp highlight) for depth of field. Contrast roughly doubled; file size went *down*
+  (41.8 KB → 32.0 KB for the barber set) because smooth shading compresses better than noise.
+- Static depth is CSS only, so a phone pays nothing for it; pointer tracking and parallax are
+  enhancements. `prefers-reduced-motion` turns all of it off, and `test.mjs` asserts that.
+
+## Artwork
+
+Added 2026-09-21. Sites were text-only before this: no hero image, no gallery pictures, no
+`og:image`, so a texted demo link unfurled bare.
+
+```bash
+npm run art -- preset barber          # hero panel + three gallery stills for the trade
+npm run art -- client peaky-barbers   # the link preview card for one business
+```
+
+- Assets live in `assets/presets/<preset>/` (reused by every client in that trade) and
+  `assets/clients/<slug>/` (one business). `build.mjs` copies whatever is there into
+  `sites/<slug>/img/`, so the drag-and-drop deploy stays self-contained.
+- Dimensions come from an `images.json` sidecar the generator writes, so the build can emit
+  width/height without an image library. Build and tests stay zero-dependency; only this prep
+  step needs Python with Pillow.
+- **Sample trade art is demo-only.** A live build drops it, because generic artwork shown on a
+  live site reads as a claim about work that was never done. Same logic as the rating schema.
+  A client's own photograph always takes priority and is allowed in both modes.
+- The art is deliberately not photography: brand-coloured panels built from the preset's own
+  colours. No faces, no fake results, no interiors passed off as anyone's premises.
+- Real photos are a drop-in replacement at handover: put them in `assets/clients/<slug>/` and
+  rebuild. That is the intended ending, not a compromise.
+- Only `barber` has artwork so far, so the other 19 trades build exactly as before, with no
+  empty image tags. `npm run art -- preset <trade>` lifts each one when we get to it.
 
 ## Repository
 

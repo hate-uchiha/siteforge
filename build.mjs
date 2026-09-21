@@ -250,6 +250,7 @@ export function mergeConfig(raw) {
 
   cfg.business.hours = hours;
   cfg.business.areas = cfg.business.areas.length ? cfg.business.areas : ['your town', 'your county'];
+  cfg.images = resolveImages(cfg, raw);
   return cfg;
 }
 
@@ -273,9 +274,246 @@ function siteUrl(cfg) {
 
 const LOCALES = { GB: 'en_GB', US: 'en_US', CA: 'en_CA', AU: 'en_AU', IE: 'en_IE', NZ: 'en_NZ', ZA: 'en_ZA' };
 
+// --- imagery ---------------------------------------------------------------
+// Slots are found on disk, not declared: drop a file into
+// assets/clients/<slug>/ for one business, or assets/presets/<preset>/ to cover
+// a whole trade. tools/make-preset-art.py writes the dimensions sidecar; the
+// build never needs an image library.
+//
+// Two rules this layer exists to hold:
+//   1. Sample artwork is for demos only. A live site never shows generic trade
+//      art as if it were the business's own work.
+//   2. Nothing is referenced unless the file is really there, so a deleted or
+//      misspelled asset fails the build rather than shipping a broken image.
+
+const PRESET_ART_DIR = path.join(ASSET_DIR, 'presets');
+const CLIENT_ART_DIR = path.join(ASSET_DIR, 'clients');
+const IMAGE_EXTENSIONS = ['.webp', '.avif', '.jpg', '.jpeg', '.png'];
+
+function firstExisting(dir, base) {
+  if (!dir) return null;
+  for (const ext of IMAGE_EXTENSIONS) {
+    const candidate = path.join(dir, base + ext);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+function readArtManifest(dir) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(dir, 'images.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function measure(dir, file) {
+  const manifest = readArtManifest(dir);
+  if (!manifest) return {};
+  const base = path.basename(file);
+  const entries = [manifest.hero, manifest.og, ...(manifest.craft || [])].filter(Boolean);
+  const hit = entries.find((entry) => entry.file === base);
+  return hit ? { width: hit.width, height: hit.height } : {};
+}
+
+// A client-supplied path may be written relative to the repo root or to assets/.
+function resolveSupplied(cfg, value) {
+  if (!value || typeof value !== 'string') return null;
+  const trimmed = value.replace(/^\.?\//, '');
+  const candidates = [
+    path.isAbsolute(value) ? value : null,
+    path.join(ROOT, trimmed),
+    path.join(ASSET_DIR, trimmed),
+    path.join(CLIENT_ART_DIR, cfg.slug, path.basename(trimmed)),
+  ].filter(Boolean);
+  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+}
+
+export function resolveImages(cfg, raw = {}) {
+  const supplied = raw.images || {};
+  const clientDir = path.join(CLIENT_ART_DIR, cfg.slug);
+  const presetDir = path.join(PRESET_ART_DIR, cfg.presetId);
+  // Sample trade art is demo furniture. On a live site it would read as a claim
+  // about work the business never did.
+  const sampleAllowed = cfg.demo;
+  const images = { hero: null, og: null, craft: [], disclosure: cfg.notice };
+
+  const pick = (slot, suppliedValue, sampleBase) => {
+    const own = resolveSupplied(cfg, suppliedValue) || firstExisting(clientDir, slot);
+    if (own) return { from: own, out: `img/${path.basename(own)}`, sample: false, ...measure(clientDir, own) };
+    if (!sampleAllowed) return null;
+    const sample = firstExisting(presetDir, sampleBase || slot);
+    if (!sample) return null;
+    return { from: sample, out: `img/${path.basename(sample)}`, sample: true, ...measure(presetDir, sample) };
+  };
+
+  images.hero = pick('hero', supplied.hero, 'hero');
+  images.og = pick('og', supplied.og, 'og');
+
+  for (let i = 0; i < (cfg.gallery || []).length; i += 1) {
+    const item = cfg.gallery[i];
+    const label = typeof item === 'string' ? item : item.label;
+    const own = resolveSupplied(cfg, typeof item === 'string' ? null : item.image);
+    // Sample stills are used once each: a page showing the same three pictures
+    // twice reads as a broken gallery, not a designed one. Tiles past the last
+    // still keep the preset's gradient tile.
+    const sampleBase = `craft-${i + 1}`;
+    const shot = own
+      ? { from: own, out: `img/${path.basename(own)}`, sample: false }
+      : sampleAllowed
+        ? pick(null, null, sampleBase)
+        : null;
+    images.craft.push(shot ? { ...shot, label, alt: label } : null);
+  }
+
+  return images;
+}
+
+// Every img carries its dimensions when we know them, so the page does not shift
+// as pictures arrive. Where we do not know, CSS holds the slot's aspect ratio.
+function imgAttrs(image, extra = {}) {
+  const bits = [`src="${esc(image.out)}"`];
+  if (image.width && image.height) {
+    bits.push(`width="${image.width}"`, `height="${image.height}"`);
+  }
+  for (const [key, value] of Object.entries(extra)) bits.push(`${key}="${esc(value)}"`);
+  return bits.join(' ');
+}
+
+function imageUrl(cfg, image) {
+  if (!image) return '';
+  const base = siteUrl(cfg);
+  return base ? `${base}/${image.out}` : image.out;
+}
+
 function locale(cfg) {
   const country = String((cfg.business.address || {}).country || '').toUpperCase();
   return LOCALES[country] || 'en';
+}
+
+// --- pages -----------------------------------------------------------------
+// One page per job the visitor might be doing. Each entry gets its own title,
+// its own section mix and its own layout treatment (the page-<id> class), so the
+// site reads as a real shop rather than one long scroll with anchors.
+//
+// Every subpage sits exactly one level deep, which keeps the relative link
+// prefix ('../') a single, testable value instead of a path resolver.
+
+const PAGES = [
+  {
+    id: 'home',
+    dir: '',
+    label: 'Home',
+    nav: false,
+    title: (cfg) => `${cfg.business.name} | ${cfg.hero.headline}`,
+    description: (cfg) => cfg.hero.sub,
+    sections: ['hero', 'heroBand', 'trustStrip', 'services', 'why', 'gallery', 'testimonials', 'areas', 'band', 'contact'],
+  },
+  {
+    id: 'services',
+    dir: 'services',
+    label: 'Services',
+    nav: true,
+    kicker: 'What we do',
+    heading: (cfg) => cfg.services[0] ? `Everything we do, priced up front` : 'Services',
+    intro: (cfg) => `Every job below is quoted before we start. No hourly surprises, no extras bolted on at the end.`,
+    title: (cfg) => `Services | ${cfg.business.name}`,
+    description: (cfg) => `What ${cfg.business.name} does, how each job works, and what it costs before we start.`,
+    sections: ['pageHead', 'services', 'steps', 'why', 'faq', 'band'],
+  },
+  {
+    id: 'work',
+    dir: 'work',
+    label: 'Our work',
+    nav: true,
+    kicker: 'Proof',
+    heading: () => 'Recent jobs, up close',
+    intro: () => 'A look at the standard we work to. Replace these with photographs of your own jobs and this page does the selling for you.',
+    title: (cfg) => `Our work | ${cfg.business.name}`,
+    description: (cfg) => `Photographs of recent work from ${cfg.business.name}, and the standard we hold every job to.`,
+    sections: ['pageHead', 'gallery', 'testimonials', 'band'],
+  },
+  {
+    id: 'about',
+    dir: 'about',
+    label: 'About',
+    nav: true,
+    kicker: 'Who you are dealing with',
+    heading: (cfg) => `${cfg.business.name}, and how we work`,
+    intro: (cfg) => cfg.hero.sub,
+    title: (cfg) => `About | ${cfg.business.name}`,
+    description: (cfg) => `How ${cfg.business.name} works, what is guaranteed, and the ground we cover.`,
+    sections: ['pageHead', 'why', 'areas', 'band'],
+  },
+  {
+    id: 'reviews',
+    dir: 'reviews',
+    label: 'Reviews',
+    nav: true,
+    kicker: 'Feedback',
+    heading: () => 'What people say afterwards',
+    intro: () => 'Comments from recent customers. We would rather show you none than invent one.',
+    title: (cfg) => `Reviews | ${cfg.business.name}`,
+    description: (cfg) => `Customer feedback and reviews for ${cfg.business.name}, from people who booked recently.`,
+    sections: ['pageHead', 'testimonials', 'band'],
+  },
+  {
+    id: 'faq',
+    dir: 'faq',
+    label: 'FAQs',
+    nav: true,
+    kicker: 'Before you ask',
+    heading: () => 'Questions we get every week',
+    intro: () => 'If yours is not here, ring us. You will get a person, not a form.',
+    title: (cfg) => `FAQs | ${cfg.business.name}`,
+    description: (cfg) => `Common questions about ${cfg.business.name}, answered.`,
+    sections: ['pageHead', 'faq', 'band'],
+  },
+  {
+    id: 'contact',
+    dir: 'contact',
+    label: 'Contact',
+    nav: true,
+    kicker: 'Get in touch',
+    heading: () => 'Tell us what you need',
+    intro: () => 'A quote usually comes back within the hour. Emergencies get answered straight away.',
+    title: (cfg) => `Contact | ${cfg.business.name}`,
+    description: (cfg) => `Phone, opening hours, and a quote form for ${cfg.business.name}.`,
+    sections: ['pageHead', 'contact', 'areas'],
+  },
+];
+
+const pageById = (id) => PAGES.find((page) => page.id === id) || PAGES[0];
+
+// Subpages are one level deep, so this is '' or '../' and nothing else.
+function prefixOf(page) {
+  return page.dir ? '../' : '';
+}
+
+function pageHref(page, targetId) {
+  const target = pageById(targetId);
+  const prefix = prefixOf(page);
+  if (!target.dir) return prefix || './';
+  return `${prefix}${target.dir}/`;
+}
+
+// Every "free quote" button has to land somewhere real: the form on the home
+// page, or the contact page from anywhere else.
+function quoteHref(page, targetId = 'contact') {
+  return page.dir ? pageHref(page, targetId) : '#quote';
+}
+
+// Visible images are served relative to the page; og:image stays rooted at the
+// site root because social crawlers resolve it against the canonical URL.
+function prefixImages(images, prefix) {
+  if (!prefix) return images;
+  const shift = (image) => (image ? { ...image, out: `${prefix}${image.out}` } : null);
+  return {
+    ...images,
+    hero: shift(images.hero),
+    og: images.og,
+    craft: (images.craft || []).map(shift),
+  };
 }
 
 function serviceIcons(cfg) {
@@ -308,7 +546,7 @@ function defaultWhy(cfg) {
   ];
 }
 
-function jsonLd(cfg) {
+function jsonLd(cfg, page = pageById('home')) {
   const biz = cfg.business;
   const type = cfg.preset.schemaType;
   const url = siteUrl(cfg);
@@ -359,9 +597,34 @@ function jsonLd(cfg) {
     };
   }
 
-  const blocks = [data];
+  const blocks = [];
 
-  if (cfg.faq && cfg.faq.length) {
+  // The business profile belongs on the home page. Subpages describe themselves
+  // and where they sit, which is what earns the breadcrumb in a result.
+  if (page.id === 'home') {
+    blocks.push(data);
+  } else {
+    const pageUrl = url ? `${url}/${page.dir}/` : undefined;
+    blocks.push({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: page.label,
+      description: page.description(cfg),
+      url: pageUrl,
+      isPartOf: { '@type': 'WebSite', name: biz.name, url: url || undefined },
+    });
+    blocks.push({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: url || undefined },
+        { '@type': 'ListItem', position: 2, name: page.label, item: pageUrl },
+      ],
+    });
+  }
+
+  // FAQ markup follows the questions, which live on their own page.
+  if (page.id === 'faq' && cfg.faq && cfg.faq.length) {
     blocks.push({
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
@@ -381,20 +644,91 @@ function jsonLd(cfg) {
 
 /* ---------- sections ---------- */
 
-function header(cfg) {
+// Subpages open with this instead of the home hero. A big form-led hero on every
+// page would make each one feel like the same page; a quiet head lets the section
+// below it lead instead.
+function pageHead(cfg, page) {
+  const image = (cfg.images || {}).hero;
+  // A real photograph earns the panel. Failing that — and in every demo — the
+  // space carries facts instead, because repeating the band on six subpages would
+  // read as one page again, just longer.
+  const aside =
+    image && !image.sample
+      ? `<figure class="page-head-art">
+          <span class="plane" data-depth="0.04" style="background-image:url('${esc(image.out)}')" aria-hidden="true"></span>
+          <img ${imgAttrs(image, { alt: `${cfg.business.name}, ${page.label.toLowerCase()}`, loading: 'eager', decoding: 'async' })}>
+        </figure>`
+      : `<aside class="page-head-card" data-depth="-0.035">
+          <h2>What you get</h2>
+          <ul>
+            ${cfg.trust.map((item) => `<li>${icon('check')}<span>${esc(item)}</span></li>`).join('\n            ')}
+          </ul>
+          ${cfg.business.phone ? `<a class="card-phone" href="${telHref(cfg.business.phone)}">${icon('phone')}<span>${esc(cfg.business.phone)}</span></a>` : `<a class="card-phone" href="${quoteHref(page)}">${esc(cfg.ctas.secondary)}</a>`}
+        </aside>`;
+
+  return `
+    <section class="page-head">
+      <div class="wrap page-head-inner">
+        <div>
+          <span class="eyebrow">${esc(page.kicker || '')}</span>
+          <h1>${esc(page.heading(cfg))}</h1>
+          <p class="lede">${esc(page.intro(cfg))}</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="${quoteHref(page)}">${esc(cfg.ctas.primary)}</a>
+            ${cfg.business.phone ? `<a class="btn btn-ghost" href="${telHref(cfg.business.phone)}">${icon('phone')}<span>${esc(cfg.business.phone)}</span></a>` : ''}
+          </div>
+        </div>
+        ${aside}
+      </div>
+    </section>`;
+}
+
+// What actually happens after they get in touch. Generic on purpose: invented
+// specifics about someone's process would be a claim we cannot back.
+function steps(cfg) {
+  const items = [
+    ['You tell us the job', `A call or the form. A couple of photos usually saves a visit, and we will say so if it does.`],
+    ['You get a written price', `Fixed before anything starts, so the number you agree to is the number you pay.`],
+    ['We turn up when we said', `No vague windows. If we are running late you get a call, not an apology afterwards.`],
+    ['You check it, then pay', `Nothing is due until the work is done and you have looked it over properly.`],
+  ];
+  return `
+    <section class="section section-steps" id="how">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="kicker">How it goes</span>
+          <h2>From your first message to a finished job</h2>
+          <p>Four steps, no mystery, and a price you can hold us to.</p>
+        </div>
+        <ol class="steps">
+          ${items
+            .map(
+              ([title, body], index) => `
+          <li class="step reveal" style="--i:${index}">
+            <span class="step-num" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+            <h3>${esc(title)}</h3>
+            <p>${esc(body)}</p>
+          </li>`
+            )
+            .join('')}
+        </ol>
+      </div>
+    </section>`;
+}
+
+function header(cfg, page) {
   const biz = cfg.business;
-  const links = [
-    ['#services', 'Services'],
-    ['#why', 'Why us'],
-    ['#reviews', cfg.testimonials.length ? 'Reviews' : null],
-    ['#areas', 'Areas'],
-    ['#faq', 'FAQs'],
-  ].filter((l) => l[1]);
+  const links = PAGES.filter((entry) => entry.nav).map((entry) => [pageHref(page, entry.id), entry.label]);
+  if (cfg.testimonials.length === 0) {
+    const index = links.findIndex(([, label]) => label === 'Reviews');
+    if (index >= 0) links.splice(index, 1);
+  }
+  const current = (entry) => (entry.id === page.id ? ' aria-current="page"' : '');
 
   return `
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="#top">
+      <a class="brand" href="${pageHref(page, 'home')}">
         <span class="brand-mark" aria-hidden="true">${esc(initials(biz.name))}</span>
         <span>
           <span class="brand-name">${esc(biz.name)}</span>
@@ -402,11 +736,13 @@ function header(cfg) {
         </span>
       </a>
       <nav class="nav" id="nav" aria-label="Main">
-        ${links.map(([href, label]) => `<a href="${href}">${esc(label)}</a>`).join('\n        ')}
+        ${PAGES.filter((entry) => entry.nav)
+          .map((entry) => `<a href="${pageHref(page, entry.id)}"${current(entry)}>${esc(entry.label)}</a>`)
+          .join('\n        ')}
       </nav>
       <div class="header-cta">
         ${biz.phone ? `<a class="header-tel" href="${telHref(biz.phone)}">${icon('phone')}<span>${esc(biz.phone)}</span></a>` : ''}
-        <a class="btn btn-primary" href="#quote">${esc(cfg.ctas.primary)}</a>
+        <a class="btn btn-primary" href="${quoteHref(page)}">${esc(cfg.ctas.primary)}</a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Menu">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
         </button>
@@ -442,7 +778,7 @@ function heroForm(cfg) {
         </form>`;
 }
 
-function hero(cfg) {
+function hero(cfg, page = pageById('home')) {
   const biz = cfg.business;
   return `
     <section class="hero" id="top">
@@ -452,7 +788,7 @@ function hero(cfg) {
           <h1>${esc(cfg.hero.headline)}</h1>
           <p class="hero-sub">${esc(cfg.hero.sub)}</p>
           <div class="hero-cta">
-            <a class="btn btn-primary" href="#quote">${esc(cfg.ctas.primary)}</a>
+            <a class="btn btn-primary" href="${quoteHref(page)}">${esc(cfg.ctas.primary)}</a>
             ${biz.phone ? `<a class="btn btn-ghost" href="${telHref(biz.phone)}">${icon('phone')}<span>${esc(biz.phone)}</span></a>` : ''}
           </div>
           <ul class="hero-points">
@@ -462,6 +798,27 @@ function hero(cfg) {
         <div class="hero-card">
           ${heroForm(cfg)}
         </div>
+      </div>
+    </section>`;
+}
+
+// Sits directly under the hero so the first screen still argues the case and the
+// second one shows the trade. Decorative sample art is hidden from screen readers;
+// a client's own photograph is announced.
+function heroBand(cfg) {
+  const image = (cfg.images || {}).hero;
+  if (!image) return '';
+  const alt = image.sample ? '' : `${cfg.business.name}, ${cfg.hero.headline}`;
+  const decorative = image.sample ? { 'aria-hidden': 'true' } : {};
+  const url = image.out;
+  return `
+    <section class="band-art" aria-label="${esc(image.sample ? 'Sample imagery' : cfg.business.name)}">
+      <div class="wrap">
+        <figure class="art">
+          <span class="plane" data-depth="0.05" style="background-image:url('${esc(url)}')" aria-hidden="true"></span>
+          <img ${imgAttrs(image, { alt, decoding: 'async', fetchpriority: 'high', ...decorative })}>
+          ${image.sample ? `<figcaption class="sample-tag" data-depth="-0.03">${esc(cfg.demo ? 'Sample image, replaced with your own photos' : '')}</figcaption>` : ''}
+        </figure>
       </div>
     </section>`;
 }
@@ -556,20 +913,36 @@ function why(cfg) {
 
 function gallery(cfg) {
   if (!cfg.gallery.length) return '';
+  const shots = (cfg.images || {}).craft || [];
+  const withImages = shots.filter(Boolean).length;
+  // A live site with no client photographs shows no tiles at all: a gallery of
+  // generic trade art would read as a claim about work that was never done.
+  if (!cfg.demo && withImages === 0) return '';
+  const caption = cfg.demo
+    ? 'Sample images while the site is in preview. Real photos of real jobs convert better than stock every time.'
+    : 'Recent jobs.';
   return `
     <section class="section" id="work">
       <div class="wrap">
         <div class="section-head reveal">
           <span class="kicker">Our work</span>
           <h2>Recent jobs</h2>
-          <p>Replace these tiles with your own photographs. Real photos of real jobs convert better than stock every time.</p>
+          <p>${esc(caption)}</p>
         </div>
         <div class="gallery reveal">
           ${cfg.gallery
-            .map((g) => {
+            .map((g, index) => {
               const label = typeof g === 'string' ? g : g.label;
-              const image = typeof g === 'string' ? '' : g.image;
-              return `<button class="shot" type="button" aria-label="${esc(label)}">${image ? `<img src="${esc(image)}" alt="${esc(label)}" loading="lazy">` : ''}<span>${esc(label)}</span></button>`;
+              const image = shots[index] || null;
+              const body = image
+                ? `<img ${imgAttrs(image, {
+                    alt: image.sample ? '' : label,
+                    loading: 'lazy',
+                    decoding: 'async',
+                    ...(image.sample ? { 'aria-hidden': 'true' } : {}),
+                  })}>`
+                : '';
+              return `<button class="shot${image ? ' shot-art' : ''}" type="button" aria-label="${esc(label)}">${body}<span>${esc(label)}</span>${image && image.sample ? '<span class="shot-sample">sample</span>' : ''}</button>`;
             })
             .join('\n          ')}
         </div>
@@ -577,7 +950,7 @@ function gallery(cfg) {
     </section>`;
 }
 
-function testimonials(cfg) {
+function testimonials(cfg, limit) {
   if (!cfg.testimonials.length) return '';
   const rating = cfg.business.rating || { value: '', count: '' };
   return `
@@ -593,7 +966,7 @@ function testimonials(cfg) {
           }
         </div>
         <div class="grid grid-3">
-          ${cfg.testimonials
+          ${(limit ? cfg.testimonials.slice(0, limit) : cfg.testimonials)
             .map(
               (t) => `<article class="quote reveal">
             <div class="stars" aria-label="5 out of 5">${icon('star')}${icon('star')}${icon('star')}${icon('star')}${icon('star')}</div>
@@ -648,7 +1021,7 @@ function faqSection(cfg) {
     </section>`;
 }
 
-function band(cfg) {
+function band(cfg, page = pageById('home')) {
   const biz = cfg.business;
   return `
     <section class="section">
@@ -660,14 +1033,14 @@ function band(cfg) {
           </div>
           <div class="hero-cta" style="margin:0">
             ${biz.phone ? `<a class="btn btn-accent" href="${telHref(biz.phone)}">${icon('phone')}<span>${esc(biz.phone)}</span></a>` : ''}
-            <a class="btn btn-white" href="#quote">${esc(cfg.ctas.primary)}</a>
+            <a class="btn btn-white" href="${quoteHref(page)}">${esc(cfg.ctas.primary)}</a>
           </div>
         </div>
       </div>
     </section>`;
 }
 
-function contact(cfg) {
+function contact(cfg, page = pageById('home')) {
   const biz = cfg.business;
   const social = Object.entries(biz.social || {}).filter(([, v]) => v);
 
@@ -738,7 +1111,7 @@ function contact(cfg) {
     </section>`;
 }
 
-function footer(cfg) {
+function footer(cfg, page) {
   const biz = cfg.business;
   const year = new Date().getFullYear();
   return `
@@ -746,7 +1119,7 @@ function footer(cfg) {
     <div class="wrap">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a class="brand" href="#top">
+          <a class="brand" href="${pageHref(page, 'home')}">
             <span class="brand-mark" aria-hidden="true">${esc(initials(biz.name))}</span>
             <span class="brand-name" style="color:#fff">${esc(biz.name)}</span>
           </a>
@@ -754,15 +1127,16 @@ function footer(cfg) {
         </div>
         <div>
           <h4>Services</h4>
-          <ul>${cfg.services.slice(0, 5).map((s) => `<li><a href="#services">${esc(s.name)}</a></li>`).join('')}</ul>
+          <ul>${cfg.services.slice(0, 5).map((s) => `<li><a href="${pageHref(page, 'services')}">${esc(s.name)}</a></li>`).join('')}</ul>
         </div>
         <div>
           <h4>Company</h4>
           <ul>
-            <li><a href="#why">Why us</a></li>
-            <li><a href="#areas">Areas covered</a></li>
-            <li><a href="#faq">FAQs</a></li>
-            <li><a href="#quote">Contact</a></li>
+            <li><a href="${pageHref(page, 'about')}">About us</a></li>
+            <li><a href="${pageHref(page, 'work')}">Our work</a></li>
+            <li><a href="${pageHref(page, 'faq')}">FAQs</a></li>
+            <li><a href="${pageHref(page, 'contact')}">Contact</a></li>
+            <li><a href="${quoteHref(page)}">Free quote</a></li>
           </ul>
         </div>
         <div>
@@ -783,23 +1157,50 @@ function footer(cfg) {
   </footer>`;
 }
 
-function callbar(cfg) {
+function callbar(cfg, page) {
   const biz = cfg.business;
   return `
   <div class="callbar">
     ${biz.phone ? `<a class="btn btn-primary" href="${telHref(biz.phone)}">${icon('phone')}<span>Call now</span></a>` : ''}
-    <a class="btn btn-accent" href="#quote">Free quote</a>
+    <a class="btn btn-accent" href="${quoteHref(page)}">Free quote</a>
   </div>`;
 }
 
 /* ---------- document ---------- */
 
-export function render(cfg) {
+const SECTIONS = {
+  hero: (cfg, page) => hero(cfg, page),
+  heroBand: (cfg) => heroBand(cfg),
+  trustStrip: (cfg) => trustStrip(cfg),
+  pageHead: (cfg, page) => pageHead(cfg, page),
+  services: (cfg) => services(cfg),
+  steps: (cfg) => steps(cfg),
+  why: (cfg) => why(cfg),
+  gallery: (cfg) => gallery(cfg),
+  testimonials: (cfg, page, options) => testimonials(cfg, options ? options.limit : undefined),
+  areas: (cfg) => areas(cfg),
+  faq: (cfg) => faqSection(cfg),
+  band: (cfg, page) => band(cfg, page),
+  contact: (cfg, page) => contact(cfg, page),
+};
+
+// Home keeps fewer reviews than the reviews page, so the two pages do not read as
+// the same list twice.
+const SECTION_OPTIONS = { home: { testimonials: { limit: 3 } } };
+
+export function render(cfg, pageOrId = 'home') {
+  const page = typeof pageOrId === 'string' ? pageById(pageOrId) : pageOrId;
   const biz = cfg.business;
   const font = FONT_PAIRINGS[cfg.brand.font] || FONT_PAIRINGS.modern;
   const url = siteUrl(cfg);
-  const title = `${biz.name} | ${cfg.hero.headline}`;
-  const description = cfg.hero.sub.slice(0, 155);
+  const canonical = url ? (page.dir ? `${url}/${page.dir}/` : url) : '';
+  const title = page.title(cfg);
+  const description = page.description(cfg).slice(0, 155);
+  const prefix = prefixOf(page);
+  const pageCfg = { ...cfg, images: prefixImages(cfg.images || {}, prefix) };
+  const og = (cfg.images || {}).og || null;
+  const ogAlt = og ? (og.sample ? `${cfg.business.tagline} sample preview card` : `${biz.name}, ${cfg.hero.headline}`) : '';
+  const options = SECTION_OPTIONS[page.id] || {};
 
   const theme = `:root {
   --brand: ${cfg.brand.primary};
@@ -818,6 +1219,16 @@ export function render(cfg) {
   --font-body: ${font.body}, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }`;
 
+  const body = page.sections
+    .map((name) => {
+      const [key, opts] = Array.isArray(name) ? name : [name, options[name]];
+      const render1 = SECTIONS[key];
+      if (!render1) throw new Error(`page "${page.id}" asks for unknown section "${key}"`);
+      return render1(pageCfg, page, opts);
+    })
+    .filter((block) => block && block.trim())
+    .join('\n');
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -826,42 +1237,39 @@ export function render(cfg) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <meta name="theme-color" content="${esc(cfg.brand.primary)}">
-${url ? `<link rel="canonical" href="${esc(url)}">` : ''}
+${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ''}
 <meta name="robots" content="${cfg.demo ? 'noindex, nofollow' : 'index, follow'}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:locale" content="${esc(locale(cfg))}">
-${url ? `<meta property="og:url" content="${esc(url)}">` : ''}
+${canonical ? `<meta property="og:url" content="${esc(canonical)}">` : ''}
+${og ? `<meta property="og:image" content="${esc(imageUrl(cfg, og))}">
+${og.width && og.height ? `<meta property="og:image:width" content="${og.width}">
+<meta property="og:image:height" content="${og.height}">` : ''}
+<meta property="og:image:alt" content="${esc(ogAlt)}">
+<meta name="twitter:image" content="${esc(imageUrl(cfg, og))}">
+<meta name="twitter:image:alt" content="${esc(ogAlt)}">` : ''}
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="${prefix}favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=${font.google}&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="${prefix}styles.css">
 <script type="application/ld+json">
-${jsonLd(cfg)}
+${jsonLd(cfg, page)}
 </script>
 </head>
-<body>
+<body class="page page-${page.id}">
 <a class="skip" href="#main">Skip to content</a>
 ${cfg.demo ? `<div class="demobar">${esc(cfg.notice)} <strong>Demo</strong></div>` : ''}
-${header(cfg)}
+${header(pageCfg, page)}
 <main id="main">
-${hero(cfg)}
-${trustStrip(cfg)}
-${services(cfg)}
-${why(cfg)}
-${gallery(cfg)}
-${testimonials(cfg)}
-${areas(cfg)}
-${faqSection(cfg)}
-${band(cfg)}
-${contact(cfg)}
+${body}
 </main>
-${footer(cfg)}
-${callbar(cfg)}
-<script src="app.js" defer></script>
+${footer(pageCfg, page)}
+${callbar(pageCfg, page)}
+<script src="${prefix}app.js" defer></script>
 </body>
 </html>
 `;
@@ -873,7 +1281,7 @@ ${callbar(cfg)}
 </svg>
 `;
 
-  return { html, theme, favicon, title, description };
+  return { html, theme, favicon, title, description, page };
 }
 
 /* ---------- output ---------- */
@@ -886,13 +1294,33 @@ export function writeSite(cfg) {
   const out = path.join(OUT_DIR, cfg.slug);
   fs.mkdirSync(out, { recursive: true });
 
-  const { html, theme, favicon } = render(cfg);
+  const { theme, favicon } = render(cfg);
   const url = siteUrl(cfg);
 
-  fs.writeFileSync(path.join(out, 'index.html'), html);
+  // Every page is written from the same registry the nav is built from, so a
+  // page can never be linked without being generated.
+  for (const page of PAGES) {
+    const { html } = render(cfg, page);
+    const dir = page.dir ? path.join(out, page.dir) : out;
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), html);
+  }
+
   fs.writeFileSync(path.join(out, 'styles.css'), `${theme}\n\n${baseCss()}`);
   fs.copyFileSync(path.join(ASSET_DIR, 'app.js'), path.join(out, 'app.js'));
   fs.writeFileSync(path.join(out, 'favicon.svg'), favicon);
+
+  // Images are copied in rather than referenced from assets/, because the deploy
+  // step is "drag sites/<slug> in" and nothing outside that folder goes with it.
+  const images = cfg.images || {};
+  const files = [images.hero, images.og, ...(images.craft || [])].filter(Boolean);
+  if (files.length) {
+    const imageDir = path.join(out, 'img');
+    fs.mkdirSync(imageDir, { recursive: true });
+    for (const image of files) {
+      fs.copyFileSync(image.from, path.join(out, image.out));
+    }
+  }
 
   fs.writeFileSync(
     path.join(out, 'robots.txt'),
@@ -901,11 +1329,12 @@ export function writeSite(cfg) {
       : `User-agent: *\nAllow: /\n${url ? `\nSitemap: ${url}/sitemap.xml\n` : ''}`
   );
 
+  const origin = url || `https://${cfg.slug}.example.com`;
   fs.writeFileSync(
     path.join(out, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>${esc(url || `https://${cfg.slug}.example.com`)}/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+${PAGES.map((page) => `  <url><loc>${esc(origin)}/${page.dir ? `${page.dir}/` : ''}</loc><changefreq>monthly</changefreq><priority>${page.id === 'home' ? '1.0' : '0.7'}</priority></url>`).join('\n')}
 </urlset>
 `
   );

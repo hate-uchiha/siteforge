@@ -12,7 +12,8 @@
     "harvest": "node tools/harvest.mjs",
     "pool": "node tools/pool.mjs",
     "enrich": "node tools/enrich.mjs",
-    "promote": "node tools/promote.mjs"
+    "promote": "node tools/promote.mjs",
+    "art": "node tools/make-art.mjs"
   },
   "engines": {
     "node": ">=18"
