@@ -1,6 +1,6 @@
 {
   "slug": "peaky-barbers",
-  "preset": "salon",
+  "preset": "barber",
   "demo": true,
   "business": {
     "name": "Peaky Barbers",
@@ -10,7 +10,7 @@
       "street": "70-73 The Mall",
       "city": "London",
       "region": "",
-      "postalCode": "",
+      "postalCode": "E15 1XQ",
       "country": ""
     },
     "geo": {

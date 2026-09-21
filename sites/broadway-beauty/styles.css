@@ -1,16 +1,16 @@
 :root {
-  --brand: #141414;
-  --brand-dark: #0d0d0d;
-  --accent: #c9a227;
-  --ink: #0a0a0a;
-  --muted: #787878;
+  --brand: #2b2b3a;
+  --brand-dark: #1c1c26;
+  --accent: #d4a373;
+  --ink: #12121a;
+  --muted: #7d7d81;
   --bg: #ffffff;
-  --surface: #f7f7f7;
-  --line: #e2e2e2;
+  --surface: #f8f8f8;
+  --line: #e3e3e4;
   --radius: 14px;
   --on-brand: #ffffff;
   --on-accent: #ffffff;
-  --accent-ink: #141414;
+  --accent-ink: #2b2b3a;
   --font-head: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }

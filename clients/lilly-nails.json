@@ -1,9 +1,9 @@
 {
-  "slug": "ms-barber-shop",
-  "preset": "barber",
+  "slug": "lilly-nails",
+  "preset": "salon",
   "demo": true,
   "business": {
-    "name": "MS Barber Shop",
+    "name": "Lilly Nails",
     "phone": "",
     "email": "",
     "address": {
@@ -14,8 +14,8 @@
       "country": ""
     },
     "geo": {
-      "lat": 51.5419715,
-      "lng": 0.000647
+      "lat": 51.542028,
+      "lng": 0.0012113
     },
     "areas": [
       "London"
@@ -24,6 +24,6 @@
     "domain": ""
   },
   "testimonials": [],
-  "_source": "https://www.openstreetmap.org/way/1302435265",
+  "_source": "https://www.openstreetmap.org/way/1302435283",
   "_score": 55
 }

@@ -1,9 +1,9 @@
 {
-  "slug": "ms-barber-shop",
-  "preset": "barber",
+  "slug": "broadway-beauty",
+  "preset": "salon",
   "demo": true,
   "business": {
-    "name": "MS Barber Shop",
+    "name": "Broadway Beauty",
     "phone": "",
     "email": "",
     "address": {
@@ -14,8 +14,8 @@
       "country": ""
     },
     "geo": {
-      "lat": 51.5419715,
-      "lng": 0.000647
+      "lat": 51.5419588,
+      "lng": 0.000685
     },
     "areas": [
       "London"
@@ -24,6 +24,6 @@
     "domain": ""
   },
   "testimonials": [],
-  "_source": "https://www.openstreetmap.org/way/1302435265",
+  "_source": "https://www.openstreetmap.org/way/1302700240",
   "_score": 55
 }
