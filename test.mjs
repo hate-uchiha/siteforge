@@ -98,9 +98,25 @@ check('live mode is indexable', liveOut.html.includes('content="index, follow"')
 check('canonical uses the domain', liveOut.html.includes('<link rel="canonical" href="https://livecheck.example">'));
 check('aggregateRating only in live mode', liveOut.html.includes('aggregateRating'));
 check('sitemap url uses the domain', liveOut.html.includes('livecheck.example'));
+check('live mode omits the preset sample figures', !liveOut.html.includes('class="stats reveal"'));
+
+const liveWithStats = render(
+  mergeConfig({
+    slug: 'live-stats-check',
+    preset: 'electrician',
+    demo: false,
+    business: { name: 'Live Stats Electrical', domain: 'livestats.example' },
+    stats: [{ value: '9', label: 'Engineers on the road' }],
+  })
+);
+check(
+  'live mode renders figures the client supplied',
+  liveWithStats.html.includes('9') && liveWithStats.html.includes('Engineers on the road')
+);
 
 const demoOut = render(mergeConfig({ slug: 'demo-check', preset: 'electrician', business: { name: 'Demo Check' } }));
 check('no aggregateRating in demo mode', !demoOut.html.includes('aggregateRating'));
+check('demo keeps the sample figures', demoOut.html.includes('class="stats reveal"') && demoOut.html.includes('2,100+'));
 
 console.log(`\n${failures ? `${failures} failure(s)` : 'all checks passed'}\n`);
 if (failures) process.exit(1);

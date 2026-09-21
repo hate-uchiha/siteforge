@@ -239,6 +239,7 @@ export function mergeConfig(raw) {
     ctas: Object.assign({}, preset.ctas, raw.ctas || {}),
     trust: raw.trust || preset.trust,
     stats: raw.stats || preset.stats,
+    statsFromClient: Array.isArray(raw.stats) && raw.stats.length > 0,
     services: raw.services || preset.services,
     gallery: raw.gallery || preset.galleryLabels.map((label) => ({ label })),
     faq: raw.faq || preset.faq,
@@ -511,8 +512,17 @@ function services(cfg) {
     </section>`;
 }
 
+/* The preset figures are illustrative samples, written to show the layout. They
+   are safe on a demo, which is noindex and labelled, but a live site must not
+   assert a trading history, a job count, or a rating the business never gave us.
+   So a live build renders figures only when the client file supplies them. */
+function buildStats(cfg) {
+  return cfg.demo || cfg.statsFromClient ? cfg.stats : [];
+}
+
 function why(cfg) {
   const points = cfg.why.length ? cfg.why : defaultWhy(cfg);
+  const stats = buildStats(cfg);
   return `
     <section class="section section-alt" id="why">
       <div class="wrap">
@@ -521,11 +531,13 @@ function why(cfg) {
           <h2>Reasons customers stay with us</h2>
           <p>We are a local team, not a call centre. That means straight answers, sensible prices, and someone accountable if anything needs putting right.</p>
         </div>
-        <div class="stats reveal" style="margin-bottom:2rem">
-          ${cfg.stats
+        ${stats.length
+          ? `<div class="stats reveal" style="margin-bottom:2rem">
+          ${stats
             .map((s) => `<div class="stat"><b>${esc(s.value)}</b><span>${esc(s.label)}</span></div>`)
             .join('\n          ')}
-        </div>
+        </div>`
+          : ''}
         <div class="grid grid-2">
           ${points
             .slice(0, 4)
@@ -934,7 +946,7 @@ Built with SiteForge from the \`${cfg.presetId}\` preset${cfg.demo ? ' in demo m
 ## Replace before launch
 
 - [ ] Business name, phone, email, address, opening hours in \`clients/${cfg.slug}.json\`, then rebuild
-- [ ] Gallery tiles: real job photos in \`clients/${cfg.slug}.json\` then rebuild
+${cfg.demo || cfg.statsFromClient ? '' : `- [ ] Figures: the numbers row is hidden until you supply real \`stats\` in \`clients/${cfg.slug}.json\`\n`}- [ ] Gallery tiles: real job photos in \`clients/${cfg.slug}.json\` then rebuild
 - [ ] Testimonials: real quotes only, never invented ones
 - [ ] Form endpoint: set \`business.formEndpoint\` (Formspree, Netlify Forms, or your own handler)
 - [ ] \`business.domain\` so canonical, sitemap, and OG tags are correct
