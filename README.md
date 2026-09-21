@@ -45,7 +45,7 @@ business, already online, and asking whether they want to keep it.
 ## Structure
 
 ```
-presets/index.mjs   18 trade presets: colours, headlines, services, FAQ, stats
+presets/index.mjs   20 trade presets: colours, headlines, services, FAQ, stats
 clients/*.json      one file per business, overrides the preset
 assets/base.css     the design system, themed per client
 assets/app.js       nav, sticky call bar, scroll reveal, form handling
@@ -159,10 +159,20 @@ Add an entry to `presets/index.mjs` with a `label`, `schemaType`, `brand` colour
 `services`, `galleryLabels`, and `faq`. The `schemaType` must be a real
 [schema.org LocalBusiness type](https://schema.org/LocalBusiness) so the structured data is valid.
 
+A preset is only reachable once it is wired into the pipeline:
+
+1. `tools/categories.mjs` — the OpenStreetMap tags that find the trade, so `harvest` can query it.
+2. `tools/promote.mjs` — `CATEGORY_TO_PRESET` maps a harvested category to the preset, and
+   `NAME_HINTS` reads the business name when OpenStreetMap lumps trades together (it files every
+   salon, nail bar, beauty room, and barbershop as `shop=hairdresser`, so the name is the only
+   thing that separates them). Hints are checked in order.
+3. The counts in this file and in `STATE.md`.
+
 ## Rules that keep this sellable
 
-- Never publish invented testimonials or review counts. Demo mode discloses them as samples,
-  and the live build refuses to emit rating schema.
+- Never publish invented testimonials or review counts. Demo mode discloses them as samples, the
+  live build refuses to emit rating schema, and a live build also suppresses the preset figures
+  unless the client file supplies real ones.
 - Never use a client's name, logo, or photos without permission.
 - Never promise rankings, traffic, or sales. Promise a fast, correct, mobile-friendly site.
 - Take a demo down immediately if the business asks. No arguing, no invoice.

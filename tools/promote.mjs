@@ -125,6 +125,8 @@ const CATEGORY_TO_PRESET = {
   cleaning: 'cleaning',
   autodetailing: 'autodetailing',
   salon: 'salon',
+  nailbar: 'nailbar',
+  beauty: 'beauty',
   barber: 'barber',
   gym: 'gym',
   dentist: 'dentist',
@@ -138,10 +140,15 @@ const CATEGORY_TO_PRESET = {
   lawyer: 'lawyer',
 };
 
-// OpenStreetMap tags every barbershop, salon and beauty shop as shop=hairdresser, and
-// salon is matched first, so barbers would always land on the salon preset. The name is
-// the only signal that separates them.
-const NAME_HINTS = [[/\bbarbers?\b|\bbarbershop\b|\bbarber'?s\b/i, 'barber']];
+// OpenStreetMap tags every barbershop, salon, nail bar, and beauty room as
+// shop=hairdresser, and salon is matched first, so they would all land on the
+// salon preset with hair salon copy. The name is the only signal available, so
+// the hints are ordered: barber, then nails, then beauty.
+const NAME_HINTS = [
+  [/\bbarbers?\b|\bbarbershop\b|\bbarber'?s\b/i, 'barber'],
+  [/\bnails?\b|\bnail bar\b|\bnail salon\b|\bmanicur/i, 'nailbar'],
+  [/\bbeauty\b|\bcosmetic|\bbrows?\b|\blashes\b|\blash\b|\bskin\b|\bspa\b/i, 'beauty'],
+];
 
 function refinePreset(preset, name) {
   if (preset !== 'salon') return preset;

@@ -9,6 +9,8 @@ export const CATEGORIES = {
   cleaning: { tags: [['shop', 'dry_cleaning'], ['shop', 'laundry'], ['craft', 'cleaning']], coverage: 'thin' },
   autodetailing: { tags: [['shop', 'car_wash'], ['shop', 'car_repair'], ['amenity', 'car_wash']], coverage: 'good' },
   salon: { tags: [['shop', 'hairdresser'], ['shop', 'beauty'], ['shop', 'massage']], coverage: 'good' },
+  nailbar: { tags: [['shop', 'nails'], ['shop', 'beauty']], coverage: 'good' },
+  beauty: { tags: [['shop', 'beauty'], ['shop', 'massage']], coverage: 'good' },
   barber: { tags: [['shop', 'hairdresser'], ['shop', 'barber']], coverage: 'good' },
   gym: { tags: [['leisure', 'fitness_centre'], ['leisure', 'sports_centre']], coverage: 'good' },
   dentist: { tags: [['amenity', 'dentist']], coverage: 'good' },

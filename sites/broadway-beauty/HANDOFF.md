@@ -1,6 +1,6 @@
 # Broadway Beauty handoff notes
 
-Built with SiteForge from the `salon` preset in demo mode.
+Built with SiteForge from the `beauty` preset in demo mode.
 
 ## Replace before launch
 

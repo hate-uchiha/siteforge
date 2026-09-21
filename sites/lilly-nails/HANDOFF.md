@@ -1,6 +1,6 @@
 # Lilly Nails handoff notes
 
-Built with SiteForge from the `salon` preset in demo mode.
+Built with SiteForge from the `nailbar` preset in demo mode.
 
 ## Replace before launch
 

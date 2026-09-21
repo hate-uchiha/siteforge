@@ -1,6 +1,6 @@
 # SiteForge state
 
-Snapshot taken 2026-09-20. Update this file whenever the pool, the clients, or the pipeline
+Snapshot taken 2026-09-21. Update this file whenever the pool, the clients, or the pipeline
 move. It is the fastest way for a new session to pick up where the last one stopped.
 
 ## What this is
@@ -10,53 +10,47 @@ client, one command to build, one folder to upload. See `README.md`.
 
 ## Health
 
-Verified 2026-09-20:
+Verified 2026-09-21:
 
-- `npm run list` works: **18 niches**, 4 configured clients.
-- `npm run build` works: **4/4 sites built**.
-- `node test.mjs` passes: **all checks passed**, including the demo and live mode safety checks.
+- `npm run list` works: **20 niches**, 8 configured clients.
+- `npm run build` works: **8/8 sites built**.
+- `node test.mjs` passes: **all checks passed**. The suite now also covers live-mode figures
+  and the address splitting used by the importer.
 - Node v22.23.2.
 
 The factory is in working condition. Nothing is half-finished or broken.
 
 ## Repository
 
-- Git was initialised 2026-09-20. First commit `ba3bd9a`, second `00a8fc5`, on branch `main`.
-- **Remote:** `git@github.com:hate-uchiha/siteforge.git`, private, pushed and in sync.
+- Git was initialised 2026-09-20. Branch `main`, **4 commits ahead of `origin/main`** as of
+  2026-09-21 (the phone-depth layer, the live-mode figure guard, the address split, and the
+  three new demos). Push when convenient; nothing is lost either way, the work is local.
+- **Remote:** `git@github.com:hate-uchiha/siteforge.git`, private.
   Recoverable from anywhere with `git clone git@github.com:hate-uchiha/siteforge.git`.
 - Backups also exist as `git bundle` files at `~/siteforge-<date>.bundle` and
   `/mnt/d/SiteForge-backup/`. Use `git bundle create <file> --all` after big changes.
-- The first two commits are authored as `Markson <markson@hate-uchiha.local>` because no git
-  identity was configured when they were made. The repo config now points at the real email.
-  To rewrite the author on the existing commits (safe here, nothing has been shared):
-
-  ```bash
-  git config user.name "Your Name"
-  git config user.email "you@example.com"
-  git rebase --root --exec 'git commit --amend --no-edit --reset-author'
-  git push --force-with-lease
-  ```
-
+- Git identity is configured (`Markson <hate.uchiha09@gmail.com>`). The first two commits are
+  still authored as `Markson <markson@hate-uchiha.local>` from before that was set. Rewriting
+  them is safe (nothing has been shared) if it ever matters:
+  `git rebase --root --exec 'git commit --amend --no-edit --reset-author'` then
+  `git push --force-with-lease`.
 - **The repository contains third-party data**: 32 real business names with addresses and
   coordinates, plus one real email and one real phone number. It is private, so this is not
   published. If it is ever made public, strip the lead data first:
-
-  ```bash
-  git rm -r --cached leads pool && echo 'leads/\npool/' >> .gitignore
-  ```
+  `git rm -r --cached leads pool && echo 'leads/\npool/' >> .gitignore`.
 
 ## Lead pool
 
-`pool/leads.json`, last updated 2026-09-18, harvested for **Stratford, London / salon**.
+`pool/leads.json`, harvested for **Stratford, London / salon**, last updated 2026-09-21.
 
 | Measure | Value |
 | --- | --- |
 | Leads | 32 |
 | Tier | B 26, C 6 |
-| Status | new 31, demo 1 |
+| Status | new 27, demo 5 |
 | Contactable (phone or email) | **1** |
 | Contacted | **0** |
-| Demo built | 1 (peaky-barbers) |
+| Demos built | **5** (all on The Mall, Stratford) |
 
 Raw harvests: `leads/raw/stratford-london-mixed.json` (29), `leads/raw/stratford-london-with-sites.json` (32).
 
@@ -67,18 +61,51 @@ is a walk-in route, not a call list.
 
 ## Clients
 
-All four are `demo: true`, so all four build as `noindex` with the preview banner. None are
-live and none have a real domain.
+All eight are `demo: true`, so all eight build as `noindex` with the preview banner. None are
+live and none have a real domain. Five come from real harvested leads; three are preset
+exercises built to test the generator.
 
-| Client | Preset |
-| --- | --- |
-| `bright-smile-dental` | dentist |
-| `kings-barbershop` | barber |
-| `peaky-barbers` | salon |
-| `riverside-plumbing` | plumber |
+| Client | Preset | Address | Source |
+| --- | --- | --- | --- |
+| `peaky-barbers` | barber | 70-73 The Mall, London, E15 1XQ | harvested |
+| `ms-barber-shop` | barber | 70-73 The Mall, London, E15 1XQ | harvested |
+| `lilly-nails` | nailbar | 70-73 The Mall, London, E15 1XQ | harvested |
+| `broadway-beauty` | beauty | 70-73 The Mall, London, E15 1XQ | harvested |
+| `zee-barbers` | barber | 61-62 The Mall, London | harvested |
+| `bright-smile-dental` | dentist | 4 Bridge Street, Springfield, IL 62701 | exercise |
+| `kings-barbershop` | barber | 87 High Street, London, E15 2QQ | exercise |
+| `riverside-plumbing` | plumber | 128 Mill Road, Springfield, IL 62704 | exercise |
 
-Only `peaky-barbers` came from a real harvested lead. The other three look like preset
-exercises.
+Note on presets: OpenStreetMap tags every salon, nail bar, beauty room, and barbershop as
+`shop=hairdresser`, so the trade name is the only thing separating them. `tools/promote.mjs`
+reads the name and routes it to `barber`, `nailbar`, or `beauty`, in that order of priority.
+`nailbar` and `beauty` were added on 2026-09-21 because the two Mall demos were showing hair
+salon copy to a nail bar and a beauty room, which reads as a template at the door.
+
+## The walk route — the next thing to actually do
+
+Five demos are built on one street. The next step is not more building: it is walking The Mall
+with a phone, demos pre-loaded, and asking each owner whether they want to keep theirs. Read
+`docs/OUTREACH.md` first — the walk-in script is three lines long and the whole thing works
+because there is nothing to imagine.
+
+| Order | Business | Demo | Door |
+| --- | --- | --- | --- |
+| 1 | Peaky Barbers | `sites/peaky-barbers` | 70-73 The Mall |
+| 2 | MS Barber Shop | `sites/ms-barber-shop` | 70-73 The Mall |
+| 3 | Lilly Nails | `sites/lilly-nails` | 70-73 The Mall |
+| 4 | Broadway Beauty | `sites/broadway-beauty` | 70-73 The Mall |
+| 5 | Zee Barbers | `sites/zee-barbers` | 61-62 The Mall |
+
+- Go on a quiet weekday morning, never at lunch or closing time.
+- Open the demo on a phone before going in, at the top of the page, so the first thing they see
+  is their own name and their own address. Every site is built for a phone first.
+- Nothing is live and nothing is indexed, so a demo can be shown, emailed, or taken down with no
+  consequences.
+- Every demo is missing a phone number, because the source data has none. Ask for it, and it goes
+  straight into `clients/<slug>.json` before the site is handed over.
+- If they say yes: 50% deposit, then set `demo: false`, add their domain, rebuild, deploy the
+  `sites/<slug>` folder, and put the monthly care plan in front of them. See `docs/PRICING.md`.
 
 ## Commands that matter
 
@@ -95,6 +122,7 @@ npm run pool -- --top 20
 npm run enrich -- --limit 50
 npm run promote -- --list
 npm run promote -- <slug>
+npm run promote -- <slug> --force   # re-import an existing client from the pool
 ```
 
 ## Companion skill
@@ -111,17 +139,23 @@ new machine, that file is the other half and needs to travel with it.
 
 ## Next actions, in order
 
-1. **Decide the trade and the area**, using `docs/HARVEST-FINDINGS.md`. Shops mean walk-ins,
-   not phone calls. Mobile trades are not in OpenStreetMap and must be found by hand.
-2. **Build 3 to 5 demos on one street, then walk it.** Do not build 32.
-3. **Add a CI check.** GitHub Actions can run `node test.mjs` on every push for free, so the
-   factory verifies itself without you remembering to.
-4. **Correct the git identity** if the commit author matters.
+1. **Walk The Mall** with the five demos above. This is the only step that can produce money, and
+   it needs no more code.
+2. **Review the demo on a real phone** before going. Not a resized browser window.
+3. **Push the local commits** if the remote should stay in sync.
+4. **Harvest a second area** only after the first route has been walked once, so the next batch is
+   informed by what actually happened at the door.
+
+Done 2026-09-21: the five Mall demos, the `nailbar` and `beauty` presets so each demo shows its
+own trade's services, the postcode fix, the live-mode figure guard, and the CI check.
 
 ## Do not
 
 - Do not commit a domain or a client's assets without permission.
 - Do not set `demo: false` on a site that is not actually going live.
-- Do not publish invented reviews. The build already refuses rating schema in demo mode.
+- Do not publish invented reviews or figures. The build refuses rating schema in demo mode, and a
+  live build now suppresses the preset numbers unless the client file supplies real ones. Neither
+  guard may be removed to make a page look fuller.
+- Do not build all 32 leads. Five on one street is the unit of work.
 - Do not run `harvest` in a loop. The Overpass endpoint starts returning 504s. Use the pacing
   built into `tools/harvest.mjs`.

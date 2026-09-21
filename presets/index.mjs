@@ -26,6 +26,57 @@ const genericFaq = (thing) => [
 
 const p = (o) => o;
 
+// Nail bars and beauty rooms are the two trades OpenStreetMap files under
+// shop=hairdresser, so they inherited the hair salon copy. That copy is wrong at
+// the door: a nail bar shown bridal hair services reads as a template, which is
+// exactly what the demo is supposed to disprove. These two carry their own
+// questions rather than the trade neutral ones.
+const nailFaq = [
+  {
+    q: `Do I need an appointment?`,
+    a: `Walk ins are usually fine on a weekday, but evenings and Saturdays go early. A message the day before gets you the time you want.`,
+  },
+  {
+    q: `How long does a set last?`,
+    a: `Gel and builder gel are normally good for two to three weeks before infills. Acrylics last longer if you come back for infills instead of picking at them.`,
+  },
+  {
+    q: `Do you remove nails done somewhere else?`,
+    a: `Yes. Removal and a tidy up is its own appointment, and the natural nail is checked before anything new goes on top of it.`,
+  },
+  {
+    q: `How do you keep the tools clean?`,
+    a: `Files and buffers are single use. Clippers, cuticle tools, and drill bits are sterilised between every client, and you are welcome to ask to see it.`,
+  },
+  {
+    q: `Can you match a colour from a photo?`,
+    a: `Usually. Bring the photo in and we will show you the closest colours we stock before starting, so there is no surprise at the end.`,
+  },
+];
+
+const beautyFaq = [
+  {
+    q: `Do I need a patch test?`,
+    a: `Tinting, lashes, and waxing need a patch test 24 to 48 hours before a first appointment. It takes two minutes and it is free.`,
+  },
+  {
+    q: `How often should I come back?`,
+    a: `Brows every three to four weeks, lashes every two to three, facials every four to six. If your skin wants longer between visits, we will say so.`,
+  },
+  {
+    q: `What if my skin is sensitive?`,
+    a: `Tell us when you book. We will pick gentler products and a shorter treatment, or say honestly that it is a job for a doctor or a dermatologist.`,
+  },
+  {
+    q: `Can I book before an event?`,
+    a: `Yes, and the timing matters. Brows and lashes want a few days, waxing wants 48 hours, and a facial wants at least a week.`,
+  },
+  {
+    q: `Do you sell packages?`,
+    a: `There are course rates for people who come regularly, but nothing is pushed at the desk. Pay as you go is fine.`,
+  },
+];
+
 export const presets = {
   plumber: p({
     label: 'Plumbing and heating',
@@ -265,6 +316,66 @@ export const presets = {
     ],
     galleryLabels: ['Skin fade', 'Beard shape', 'Scissor cut', 'Hot towel', 'Line up', 'Kids cut'],
     faq: genericFaq('bookings', 'your area'),
+  }),
+
+  nailbar: p({
+    label: 'Nail bar',
+    schemaType: 'NailSalon',
+    brand: { primary: '#3a1f33', accent: '#e8a3bd', ink: '#160b12' },
+    emergency: false,
+    hero: {
+      eyebrow: 'Gel, acrylics, and nail art',
+      headline: 'Nails that still look tidy in three weeks',
+      sub: 'Gel, acrylic, and builder gel sets with proper prep and clean cuticle work. Walk in or book ahead, and everything is cured so it lasts.',
+    },
+    ctas: { primary: 'Book an appointment', secondary: 'Call the salon' },
+    trust: ['Single use files, sterilised tools', 'Gel that lasts the three weeks', 'Walk ins welcome', 'Free repair within a week'],
+    stats: [
+      { value: '8 yrs', label: 'On the high street' },
+      { value: '3,000+', label: 'Sets done' },
+      { value: '45 min', label: 'Typical appointment' },
+      { value: '4.9', label: 'Average rating' },
+    ],
+    services: [
+      { name: 'Gel manicure', description: 'Shape, cuticle work, and a gel colour cured hard so it keeps its shine.', icon: 'brush' },
+      { name: 'Acrylic full set', description: 'Tips or forms built to the length you want, then shaped and filed to suit your hands.', icon: 'sparkle' },
+      { name: 'Builder gel and BIAB', description: 'A strength overlay for nails that bend, peel, or break, grown out rather than soaked off each time.', icon: 'shield' },
+      { name: 'Pedicure', description: 'Soak, hard skin removal, shape, and polish, finished with a foot and leg massage.', icon: 'droplet' },
+      { name: 'Nail art', description: 'Chrome, French, ombre, and freehand designs, priced per nail so the bill holds no surprises.', icon: 'flower' },
+      { name: 'Infills and repairs', description: 'Regrowth infilled and any lifted nail rebuilt, usually inside the hour.', icon: 'clock' },
+    ],
+    galleryLabels: ['Gel manicure', 'Acrylic set', 'BIAB overlay', 'Pedicure', 'Nail art', 'French tips'],
+    faq: nailFaq,
+  }),
+
+  beauty: p({
+    label: 'Beauty salon',
+    schemaType: 'BeautySalon',
+    brand: { primary: '#22302a', accent: '#c9a66b', ink: '#0f1512' },
+    emergency: false,
+    hero: {
+      eyebrow: 'Facials, brows, lashes, waxing',
+      headline: 'Treatments that fit into a lunch break',
+      sub: 'Facials, brows, lashes, and waxing by therapists who explain what is going on your skin and how often it needs repeating.',
+    },
+    ctas: { primary: 'Book a treatment', secondary: 'Call the salon' },
+    trust: ['Qualified therapists', 'Free patch tests', 'No packages pushed at the desk', 'Honest advice on what your skin needs'],
+    stats: [
+      { value: '9 yrs', label: 'Treating clients' },
+      { value: '1,500+', label: 'Regular clients' },
+      { value: '30 min', label: 'Typical treatment' },
+      { value: '4.9', label: 'Average rating' },
+    ],
+    services: [
+      { name: 'Facials', description: 'Cleanse, exfoliate, extractions, and a mask chosen for your skin on the day rather than off a list.', icon: 'flower' },
+      { name: 'Brow shaping and tinting', description: 'Wax, thread, or tweeze to a shape that suits your face, then tinted to match.', icon: 'pencil' },
+      { name: 'Lash extensions and lifts', description: 'Classic, hybrid, and volume sets, plus lifts and tints for a lower maintenance look.', icon: 'sparkle' },
+      { name: 'Waxing', description: 'Legs, underarms, bikini, and facial waxing, with hot wax on the more delicate areas.', icon: 'droplet' },
+      { name: 'Massage', description: 'Back, neck, and shoulder work for desk bound shoulders, in 30 or 60 minutes.', icon: 'heart' },
+      { name: 'Makeup for events', description: 'Bridal, occasion, and lesson appointments, with a trial where it matters.', icon: 'star' },
+    ],
+    galleryLabels: ['Facial', 'Brow shape', 'Lash set', 'Waxing', 'Massage room', 'Bridal makeup'],
+    faq: beautyFaq,
   }),
 
   gym: p({

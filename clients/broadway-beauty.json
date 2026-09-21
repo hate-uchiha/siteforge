@@ -1,6 +1,6 @@
 {
   "slug": "broadway-beauty",
-  "preset": "salon",
+  "preset": "beauty",
   "demo": true,
   "business": {
     "name": "Broadway Beauty",
